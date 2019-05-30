@@ -124,6 +124,10 @@ async function deployENS({ web3, accounts }) {
   }
 
   function loadContract(modName, contractName) {
+    if (modName === 'ens') {
+      const ens = require(`@ensdomains/ens`)
+      return ens[contractName]
+    }
     return require(`@ensdomains/${modName}/build/contracts/${contractName}`)
   }
 
