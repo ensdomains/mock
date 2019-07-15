@@ -60,7 +60,7 @@ async function deployDNSSEC(web3, accounts, ens) {
   const sha1nsec3digest = await deploy(SHA1NSEC3Digest)
   console.log('DNSSSC ORACLE contract is deployed at ', dnssec._address)
   console.log('DNSregistrar contract is deployed at ', registrar._address)
-
+  console.log('The owner of xyz doamin is ', owner)
   await dnssec.methods
     .setAlgorithm(5, rsasha1._address)
     .send({ from: accounts[0] })
