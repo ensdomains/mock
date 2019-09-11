@@ -245,7 +245,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
   if (dnssec) {
     console.log('*** Skipping auction to make DNSSEC work')
-  }else{
+  } else {
     // Can migrate now
     await auctionLegacyName(
       web3,
@@ -504,6 +504,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe'
     )
     .send({
+      gas: 5000000,
       from: accounts[0]
     })
 
