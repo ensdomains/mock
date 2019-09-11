@@ -417,12 +417,9 @@ async function deployENS({ web3, accounts }) {
     console.log(e)
   }
 
-  console.log(`resolverContract
-.setInterface(
-    namehash('eth'),
-    legacyRegistrarInterfaceId,
-    legacyAuctionRegistrar._address
-  )`)
+  console.log(
+    `Set .eth legacy registrar interface Id to ${legacyAuctionRegistrar._address}`
+  )
 
   await resolverContract
     .setInterface(
@@ -434,12 +431,9 @@ async function deployENS({ web3, accounts }) {
       from: accounts[0]
     })
 
-  console.log(`resolverContract
-    .setInterface(
-      namehash('eth'),
-      permanentRegistrarInterfaceId,
-      controller._address
-    )`)
+  console.log(
+    `Set .eth permanent registrar interface Id to ${controller._address}`
+  )
 
   /* Set the permanent registrar contract as the owner of .eth */
   await ensContract
@@ -494,10 +488,11 @@ async function deployENS({ web3, accounts }) {
     .setName('abittooawesome.eth')
     .send({ from: accounts[0], gas: 1000000 })
 
+  // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
   await resolverContract
     .setContenthash(
       aBitTooAwesome,
-      '0x736f6d65436f6e74656e74000000000000000000000000000000000000000001'
+      '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe'
     )
     .send({
       from: accounts[0]
