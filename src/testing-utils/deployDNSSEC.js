@@ -1,3 +1,4 @@
+const ROOT_NODE = '0x00000000000000000000000000000000'
 async function deployDNSSEC(web3, accounts, ens) {
   const { sha3 } = web3.utils
   function deploy(contractJSON, ...args) {
@@ -45,13 +46,8 @@ async function deployDNSSEC(web3, accounts, ens) {
   /* Deploy the main contracts  */
   const dnssec = await deploy(DNSSEC, dnsAnchors.encode(anchors))
   const registrar = await deploy(DnsRegistrar, dnssec._address, ens._address)
-  await ens.methods
-    .setSubnodeOwner(
-      '0x00000000000000000000000000000000',
-      sha3('xyz'),
-      registrar._address
-    )
-    .send({ from: accounts[0] })
+  await ens.methods.setSubnodeOwner(ROOT_NODE, sha3('xyz'), registrar._address).send({ from: accounts[0] })
+
   var owner = await ens.methods.owner(namehash('xyz')).call()
   const rsasha256 = await deploy(RSASHA256Algorithm)
   const rsasha1 = await deploy(RSASHA1Algorithm)
