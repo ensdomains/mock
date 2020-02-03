@@ -1,6 +1,6 @@
 {
   "name": "@ensdomains/mock",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "ENS mock scripts",
   "main": "dist/index.js",
   "files": [
@@ -57,7 +57,7 @@
     "eth-ens-namehash": "^2.0.8",
     "lodash": "^4.17.11",
     "table": "^5.4.6",
-    "web3": "1.0.0-beta.34"
+    "web3": "^1.2.6"
   },
   "repository": {
     "type": "git",
