@@ -854,10 +854,25 @@
   resolved "https://registry.yarnpkg.com/@ensdomains/resolver/-/resolver-0.1.13.tgz#3a43df9f2d6f4e60c677adf60311805643aac781"
   integrity sha512-VcMygGO/b0H4AXkN4CRAHw0CZd5XvTJW8YdIdZEmpJGs/O3eMzBzxpgJJ7UerD7U098rbBDSJmj0zjGudV0/aQ==
 
-"@ensdomains/subdomain-registrar@^0.2.0", "@ensdomains/subdomain-registrar@^0.2.1":
+"@ensdomains/subdomain-registrar@^0.2.0":
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/@ensdomains/subdomain-registrar/-/subdomain-registrar-0.2.1.tgz#1928631c33963e86ad6895d5cbcd01ad4141326a"
   integrity sha512-BYHne37b8vlmYftrZUrqx29UmlJ19BTp6ms8QvtPFYLff2G3J9hugVhh5MxFVZ75SR4nz4zRtPhkSgAN7sjrGA==
+  dependencies:
+    "@ensdomains/ens" "^0.4.0"
+    "@ensdomains/ethregistrar" "^2.0.0"
+    eth-ens-namehash "^2.0.0"
+    html-loader "^0.5.1"
+    idna-uts46 "1.1.0"
+    js-sha3 "0.6.1"
+    punycode "2.1.0"
+    truffle-default-builder "^2.0.0"
+    underscore "^1.8.3"
+
+"@ensdomains/subdomain-registrar@^0.2.3":
+  version "0.2.3"
+  resolved "https://registry.yarnpkg.com/@ensdomains/subdomain-registrar/-/subdomain-registrar-0.2.3.tgz#e938cae8f3fdd664f2be10a4f443441cae629343"
+  integrity sha512-iGc6NfwlvJTsk4C2BPc/wwqoK6DyAgC0ZkdztB0afZEOHkbEQa6qix+N2Dsit4NXM/qF0DA7LGAWVNM0erF27w==
   dependencies:
     "@ensdomains/ens" "^0.4.0"
     "@ensdomains/ethregistrar" "^2.0.0"
