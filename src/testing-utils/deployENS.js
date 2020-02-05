@@ -242,6 +242,9 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     console.log('Failed to register a name', e)
   }
 
+  await registerName(web3, accounts[1], controllerContract, 'otherowner')
+  nameLogger.record(`otherowner.eth`, {label: 'otherowner'})
+  newnames.push('otherowner')
   /* Setup domain with a resolver and addr/content */
   const aBitTooAwesome = 'abittooawesome.eth'
   const aBitTooAwesome2 = 'abittooawesome2.eth'
@@ -321,6 +324,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       from: accounts[0]
     })
   await ensContract.setResolver(namehash('sub2.testing.eth'), resolver._address).send({ from: accounts[0] })
+  await resolverContract.setAddr(namehash('sub2.testing.eth'), accounts[0]).send({from: accounts[0]})
   nameLogger.record(`sub2.testing.eth`, {label: 'sub2'})
   await ensContract
     .setSubnodeOwner(namehash('sub2.testing.eth'), sha3('a1'), accounts[0])
@@ -328,7 +332,23 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       from: accounts[0]
     })
   await ensContract.setResolver(namehash('a1.sub2.testing.eth'), resolver._address).send({ from: accounts[0] })
+  await resolverContract.setAddr(namehash('a1.sub2.testing.eth'), accounts[0]).send({from: accounts[0]})
   nameLogger.record(`a1.sub2.testing.eth`, {label: 'a1'})
+
+  await ensContract.setSubnodeOwner(namehash('otherowner.eth'), sha3('sub1'), accounts[0]).send({ from: accounts[1]})
+  await ensContract.setResolver(namehash('sub1.otherowner.eth'), resolver._address).send({ from: accounts[0] })
+  await resolverContract.setAddr(namehash('sub1.otherowner.eth'), accounts[0]).send({ from: accounts[0] })
+  nameLogger.record(`sub1.otherowner.eth`, {label: 'sub1'})
+
+  await ensContract.setSubnodeOwner(namehash('otherowner.eth'), sha3('sub2'), accounts[1]).send({ from: accounts[1]})
+  await ensContract.setResolver(namehash('sub2.otherowner.eth'), resolver._address).send({ from: accounts[1] })
+  await resolverContract.setAddr(namehash('sub2.otherowner.eth'), accounts[1]).send({ from: accounts[1] })
+  nameLogger.record(`sub2.otherowner.eth`, {label: 'sub2'})
+
+  await ensContract.setSubnodeOwner(namehash('testing.eth'), sha3('sub4'), accounts[1]).send({ from: accounts[0]})
+  await ensContract.setResolver(namehash('sub4.testing.eth'), resolver._address).send({ from: accounts[1] })
+  await resolverContract.setAddr(namehash('sub4.testing.eth'), accounts[0]).send({ from: accounts[1] })
+  nameLogger.record(`sub4.testing.eth`, {label: 'sub4'})
 
   if (dnssec) {
     // Deploy DNSSEC
