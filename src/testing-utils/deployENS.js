@@ -128,8 +128,6 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     )
     nameLogger.record('auctionednofinalise.eth', {label: 'auctionednofinalise'})
   }
-  nameLogger.record('example.test', {label: 'example'})
-  await testRegistrarContract.register(sha3('example'), accounts[0]).send({ from: accounts[0] })
 
   /* Setup the root reverse node */
   await ensContract.setSubnodeOwner(ROOT_NODE, sha3('reverse'), accounts[0]).send({from: accounts[0]})
@@ -425,7 +423,6 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
 
     console.log('finished setting up', name)
   }
-
   let newTestRegistrar, newReverseRegistrar, registrarMigration, registrarMigrationContract
   if(migrate){
     await newEnsContract.setSubnodeOwner(ROOT_NODE,sha3('eth'), accounts[0]).send({ from: accounts[0] })
@@ -441,6 +438,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     await newEnsContract.setSubnodeOwner(ROOT_NODE, sha3('eth'), newBaseRegistrar._address).send({ from: accounts[0] })
     nameLogger.record('eth', {label:'eth', migrated:true})
     newTestRegistrar = await deploy(web3,accounts[0], testRegistrarJSON, newEns._address, namehash('test'))
+    const newTestRegistrarContract = newTestRegistrar.methods
     await newEnsContract.setSubnodeOwner(ROOT_NODE,sha3('test'), newTestRegistrar._address).send({from: accounts[0]})
     nameLogger.record('test', {label:'test', migrated:true})
     newReverseRegistrar = await deploy(web3, accounts[0], reverseRegistrarJSON, newEns._address, newResolver._address)
@@ -543,6 +541,9 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     async function setNewResolver(name) {
       await newEnsContract.setResolver(namehash(name), newResolver._address).send({from: accounts[0]})
     }
+
+    await newTestRegistrarContract.register(sha3('example'), accounts[0]).send({ from: accounts[0] })
+    nameLogger.record('example.test', {label:'example', migrated:true})
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
