@@ -389,11 +389,11 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     .send({ from: accounts[0] })
   /* Resolve the oldresolver.eth address to the address of the public resolver */
 
-  // await resolverContract
-  //   .setAddr(namehash('oldresolver.eth'), oldResolver._address)
-  //   .send({
-  //     from: accounts[0]
-  //   })
+  await resolverContract
+    .setAddr(namehash('oldresolver.eth'), oldResolver._address)
+    .send({
+      from: accounts[0]
+    })
 
   /* Resolve the resolver.eth content to a 32 byte content hash */
   console.log('Setting up contenthash')
