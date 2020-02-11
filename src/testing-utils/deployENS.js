@@ -829,6 +829,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     ownerAddress: accounts[0],
     legacyAuctionRegistrarAddress: legacyAuctionRegistrar._address,
     oldEnsAddress: ens._address,
+    oldContentResolverAddresses: [oldResolver._address],
     oldResolverAddresses: [resolver._address, oldResolver._address],
     oldControllerAddress: controller._address,
     oldBaseRegistrarAddress: oldBaseRegistrar._address,
