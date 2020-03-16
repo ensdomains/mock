@@ -11,6 +11,19 @@ export class NameLogger{
   record(name, values){
     this.data[name] = values
   }
+
+  generateTable(){
+    let contractNames = Object.keys(this.data)
+    let contractAddressesTable = contractNames.map((key)=>{
+      let label = this.data[key].label
+      let status = this.data[key].migrated ? chalk.green('yes') : chalk.red('no')
+      return [key, this.namehash(key) , label, this.sha3(label), status]
+    })
+    contractAddressesTable.unshift(['domain', 'namehash of domain', 'label', 'labelhash', 'migrated'])
+    this.contractAddressesTable = contractAddressesTable
+    return contractAddressesTable
+  }
+
   print(){
     let config = {
       columns: {
@@ -36,15 +49,6 @@ export class NameLogger{
         }
       }
     };
-      
-    let contractNames = Object.keys(this.data)
-    let contractAddressesTable = contractNames.map((key)=>{
-      let label = this.data[key].label
-      let status = this.data[key].migrated ? chalk.green('yes') : chalk.red('no')
-      return [key, this.namehash(key) , label, this.sha3(label), status]
-    })
-    contractAddressesTable.unshift(['domain', 'namehash of domain', 'label', 'labelhash', 'migrated'])
-    let output = table(contractAddressesTable, config);  
-    return output
+    return table(this.contractAddressesTable, config);
   }
 }

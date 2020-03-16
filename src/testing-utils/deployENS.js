@@ -864,7 +864,11 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   console.log('Deployed contracts')
   console.log(output)
   console.log('Names')
+  const labels = nameLogger.generateTable()
+  response.labels = {}
+  labels.map((l, i) =>  i !== 0 ? response.labels[l[3].slice(2)] = l[2] : null )
   console.log(nameLogger.print())
+  console.log(response)
   return response
 }
 export default deployENS
