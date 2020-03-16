@@ -765,7 +765,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       )
       .send({ from: accounts[0] })
     // Change the controller from migration registrarMigration to controller
-    nameLogger.record('subdomaindummy.eth', { label: 'original', migrated: true })
+    nameLogger.record('original.subdomaindummy.eth', { label: 'original', migrated: true })
 
     console.log(
       `Add Controller ${newController._address}  to new base registrar`
