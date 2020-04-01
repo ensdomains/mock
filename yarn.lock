@@ -839,7 +839,7 @@
     testrpc "0.0.1"
     web3-utils "^1.0.0-beta.31"
 
-"@ensdomains/ethregistrar@^2.0.0":
+"@ensdomains/ethregistrar-200@npm:@ensdomains/ethregistrar@2.0.0", "@ensdomains/ethregistrar@^2.0.0":
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/@ensdomains/ethregistrar/-/ethregistrar-2.0.0.tgz#b8cdfd3f2c12942c2b86f0f61185b08083e7cf66"
   integrity sha512-qi2ENMgsMgG7ScKhOpv9pE6FmWew6uyJud+aYoFzCpENsQ6aYXZyzXWaFVS3EaWsZfERDjnMj32XO7JVZkRLMw==
