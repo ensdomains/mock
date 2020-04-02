@@ -49,8 +49,11 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar', 'SimplePriceOracle')
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
-  const oldControllerJSON = loadContract('ethregistrar-200', 'ETHRegistrarController')
-  const ACLJSON = loadContract('ethregistrar', 'ACL');
+  const oldControllerJSON = loadContract(
+    'ethregistrar-200',
+    'ETHRegistrarController'
+  )
+  const ACLJSON = loadContract('ethregistrar', 'ACL')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
   const legacyAuctionRegistrarSimplifiedJSON = loadContract(
     'ens',
@@ -558,11 +561,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     .send({ from: accounts[0] })
   // Create the new controller
 
-  const ACL = await deploy(
-    web3,
-    accounts[0],
-    ACLJSON
-  )
+  const ACL = await deploy(web3, accounts[0], ACLJSON)
 
   const newController = await deploy(
     web3,
@@ -577,11 +576,11 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   const newControllerContract = newController.methods
   await newControllerContract.setReferralFee(100).send({
     from: accounts[0]
-  });
-
-  await newControllerContract.setAccess(accounts[1], true).send({
+  })
+  const ACLContract = ACL.methods
+  await ACLContract.setAccess(accounts[1], true).send({
     from: accounts[0]
-  });
+  })
 
   // Create the new resolver
   const newResolver = await deploy(
@@ -790,7 +789,10 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       )
       .send({ from: accounts[0] })
     // Change the controller from migration registrarMigration to controller
-    nameLogger.record('original.subdomaindummy.eth', { label: 'original', migrated: true })
+    nameLogger.record('original.subdomaindummy.eth', {
+      label: 'original',
+      migrated: true
+    })
 
     console.log(
       `Add Controller ${newController._address}  to new base registrar`
@@ -892,7 +894,9 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   console.log('Names')
   const labels = nameLogger.generateTable()
   response.labels = {}
-  labels.map((l, i) =>  i !== 0 ? response.labels[l[3].slice(2)] = l[2] : null )
+  labels.map((l, i) =>
+    i !== 0 ? (response.labels[l[3].slice(2)] = l[2]) : null
+  )
   console.log(nameLogger.print())
   return response
 }
