@@ -433,6 +433,9 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       from: accounts[0]
     })
   await ensContract
+    .setResolver(namehash('sub1.testing.eth'), resolver._address)
+    .send({ from: accounts[0] })
+  await ensContract
     .setResolver(namehash('sub2.testing.eth'), resolver._address)
     .send({ from: accounts[0] })
   await resolverContract
@@ -444,6 +447,11 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     0, //BTC
     '0x76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac' //1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
   ).send({ from: accounts[0] })
+
+  await resolverContract
+    .setContenthash(namehash('sub2.testing.eth'), contenthash)
+    .send({ gas: 5000000, from: accounts[0] })
+
   nameLogger.record(`sub2.testing.eth`, { label: 'sub2' })
   await ensContract
     .setSubnodeOwner(namehash('sub2.testing.eth'), sha3('a1'), accounts[0])
