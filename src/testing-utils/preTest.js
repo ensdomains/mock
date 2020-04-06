@@ -20,7 +20,7 @@ async function setupWeb3(customProvider) {
 
 export async function mockENS() {
   const ENV = process.argv[2]
-
+  console.log('mockENS', {ENV})
   switch (ENV) {
     case 'GANACHE_GUI':
       var provider = new Web3.providers.HttpProvider('http://localhost:7545')
