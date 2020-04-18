@@ -23,7 +23,8 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const {
   legacyRegistrar: legacyRegistrarInterfaceId,
   permanentRegistrar: permanentRegistrarInterfaceId,
-  permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId
+  permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId,
+  bulkRenewal: bulkRenewalInterfaceId
 } = interfaces
 
 async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
@@ -49,11 +50,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar', 'SimplePriceOracle')
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
-  const oldControllerJSON = loadContract(
-    'ethregistrar-200',
-    'ETHRegistrarController'
-  )
-  const ACLJSON = loadContract('ethregistrar', 'ACL')
+  const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
   const legacyAuctionRegistrarSimplifiedJSON = loadContract(
     'ens',
@@ -242,7 +239,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   const controller = await deploy(
     web3,
     accounts[0],
-    oldControllerJSON,
+    controllerJSON,
     oldBaseRegistrar._address,
     priceOracle._address,
     2, // 10 mins in seconds
@@ -561,7 +558,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     .send({ from: accounts[0] })
   // Create the new controller
 
-  const ACL = await deploy(web3, accounts[0], ACLJSON)
+  const bulkRenewal = await deploy(web3, accounts[0], bulkRenewalJSON, newEns._address)
 
   const newController = await deploy(
     web3,
@@ -571,16 +568,8 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     priceOracle._address,
     2, // 10 mins in seconds
     86400, // 24 hours in seconds
-    ACL._address
   )
   const newControllerContract = newController.methods
-  await newControllerContract.setReferralFee(100).send({
-    from: accounts[0]
-  })
-  const ACLContract = ACL.methods
-  await ACLContract.setAccess(accounts[1], true).send({
-    from: accounts[0]
-  })
 
   // Create the new resolver
   const newResolver = await deploy(
@@ -647,6 +636,16 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
         legacyAuctionRegistrar._address
       )
       .send({ from: accounts[0] })
+
+    await newResolverContract
+      .setInterface(
+        namehash('eth'),
+        bulkRenewalInterfaceId,
+        bulkRenewal._address
+      )
+      .send({ from: accounts[0] })
+
+
 
     //set notsoawesome to new resolver
     await newEnsContract
@@ -859,7 +858,6 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     oldEnsAddress: ens._address,
     oldContentResolverAddresses: [oldResolver._address],
     oldResolverAddresses: [resolver._address, oldResolver._address],
-    oldControllerAddress: controller._address,
     oldBaseRegistrarAddress: oldBaseRegistrar._address,
     reverseRegistrarAddress: oldReverseRegistrar._address,
     ensAddress: newEns._address,
@@ -869,7 +867,8 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       newReverseRegistrar && newReverseRegistrar._address,
     reverseRegistrarOwnerAddress: accounts[0],
     controllerAddress: newController._address,
-    baseRegistrarAddress: newBaseRegistrar._address
+    baseRegistrarAddress: newBaseRegistrar._address,
+    bulkRenewalAddress: bulkRenewal._address
   }
   let config = {
     columns: {
