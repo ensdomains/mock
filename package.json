@@ -1,6 +1,6 @@
 {
   "name": "@ensdomains/mock",
-  "version": "2.0.11",
+  "version": "2.0.14",
   "description": "ENS mock scripts",
   "main": "dist/index.js",
   "files": [
