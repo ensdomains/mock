@@ -26,7 +26,7 @@ const {
   permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId
 } = interfaces
 
-async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
+async function deployENS({ web3, accounts, dnssec = false }) {
   const { sha3 } = web3.utils
 
   function namehash(name) {
@@ -590,7 +590,11 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     newReverseRegistrar,
     registrarMigration,
     registrarMigrationContract
-  if (migrate) {
+
+  if (dnssec) {
+    // Redeploy under new registry
+    await deployDNSSEC(web3, accounts, newEns)
+  } else {
     await newEnsContract
       .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
       .send({ from: accounts[0] })
@@ -816,13 +820,6 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
-  } else {
-    console.log('Skipping migration')
-  }
-
-  if (dnssec) {
-    // Redeploy under new registry
-    await deployDNSSEC(web3, accounts, newEns)
   }
 
   let response = {
