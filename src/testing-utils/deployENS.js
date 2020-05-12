@@ -23,7 +23,8 @@ const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 const {
   legacyRegistrar: legacyRegistrarInterfaceId,
   permanentRegistrar: permanentRegistrarInterfaceId,
-  permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId
+  permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId,
+  bulkRenewal: bulkRenewalInterfaceId
 } = interfaces
 
 async function deployENS({ web3, accounts, dnssec = false }) {
@@ -49,6 +50,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar', 'SimplePriceOracle')
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
+  const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
   const legacyAuctionRegistrarSimplifiedJSON = loadContract(
     'ens',
@@ -586,6 +588,14 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
     console.log('finished setting up', name)
   }
+
+  const bulkRenewal = await deploy(
+    web3,
+    accounts[0],
+    bulkRenewalJSON,
+    newEns._address
+  )
+
   let newTestRegistrar,
     newReverseRegistrar,
     registrarMigration,
@@ -628,7 +638,20 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       )
       .send({ from: accounts[0] })
 
-    //set notsoawesome to new resolver
+    await newResolverContract
+      .setInterface(
+        namehash('eth'),
+        bulkRenewalInterfaceId,
+        bulkRenewal._address
+      )
+      .send({ from: accounts[0] })
+
+    let bulkRenewalAddress = await newResolverContract.interfaceImplementer(
+        namehash('eth'),
+        bulkRenewalInterfaceId
+      )
+
+      //set notsoawesome to new resolver
     await newEnsContract
       .setSubnodeOwner(ROOT_NODE, sha3('eth'), newBaseRegistrar._address)
       .send({ from: accounts[0] })
@@ -825,6 +848,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
     ownerAddress: accounts[0],
+    bulkRenewalAddress: bulkRenewal._address,
     legacyAuctionRegistrarAddress: legacyAuctionRegistrar._address,
     oldEnsAddress: ens._address,
     oldContentResolverAddresses: [oldResolver._address],
