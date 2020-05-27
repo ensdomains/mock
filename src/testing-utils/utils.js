@@ -26,12 +26,13 @@ export const registerName = async function(
   web3,
   account,
   controllerContract,
-  name
+  name,
+  duration = 365 * DAYS
 ) {
   console.log(`Registering ${name}`)
   const secret =
     '0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'
-  const VALUE = 28 * DAYS + 1
+  const VALUE = duration + 1
   let newnameAvailable = await controllerContract.available(name).call()
   var commitment = await controllerContract
     .makeCommitment(name, account, secret)
@@ -41,7 +42,7 @@ export const registerName = async function(
   const time = await advanceTime(web3, parseInt(minCommitmentAge))
   await mine(web3)
   await controllerContract
-    .register(name, account, 28 * DAYS, secret)
+    .register(name, account, duration, secret)
     .send({ from: account, value: VALUE, gas: 6000000 })
 
   // The name should be no longer available

@@ -19,7 +19,7 @@ const contenthash =
 const content =
   '0x736f6d65436f6e74656e74000000000000000000000000000000000000000000'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
+const toBN = require('web3-utils').toBN;
 const {
   legacyRegistrar: legacyRegistrarInterfaceId,
   permanentRegistrar: permanentRegistrarInterfaceId,
@@ -48,7 +48,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const resolverJSON = loadContract('resolver', 'PublicResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
-  const priceOracleJSON = loadContract('ethregistrar', 'SimplePriceOracle')
+  const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
+  const linearPremiumPriceOracleJSON = loadContract('ethregistrar', 'LinearPremiumPriceOracle')
+  const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
+  
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
   const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
@@ -549,17 +552,38 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .addController(accounts[0])
     .send({ from: accounts[0] })
   // Create the new controller
+
+  // Dummy oracle with 1 ETH == 200 USD
+  const dummyOracleRate = toBN(200000000000000000000) // 2 * 1e18
+  const dummyOracle = await deploy(
+    web3,
+    accounts[0],
+    dummyOracleJSON,
+    dummyOracleRate
+  )
+  const premium = toBN('100000000000000000000') // 100 * 1e18
+  const decreaseRate = toBN('1000000000000000') // 100k secconds (about 1.15 day)
+  const linearPriceOracle = await deploy(
+    web3,
+    accounts[0],
+    linearPremiumPriceOracleJSON,
+    dummyOracle._address,
+    [0, 0, 4, 2, 1],
+    premium,
+    decreaseRate
+  )
+
   const newController = await deploy(
     web3,
     accounts[0],
     controllerJSON,
     newBaseRegistrar._address,
-    priceOracle._address,
+    linearPriceOracle._address,
     2, // 10 mins in seconds
     86400 // 24 hours in seconds
   )
   const newControllerContract = newController.methods
-
+  
   // Create the new resolver
   const newResolver = await deploy(
     web3,
@@ -841,10 +865,23 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       .send({ from: accounts[0] })
     nameLogger.record('example.test', { label: 'example', migrated: true })
 
+    const beforeTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)
+    await registerName(web3, accounts[0], newControllerContract, 'released', 30 * DAYS)
+    nameLogger.record('released', { label: 'released', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'rele', 30 * DAYS)
+    nameLogger.record('rele', { label: 'rele', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'rel', 30 * DAYS)
+    nameLogger.record('rel', { label: 'rel', migrated: true })
+
+    await advanceTime(web3, 120 * DAYS + 1)
+    await mine(web3)
+    
+    const afterTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)  
+    console.log({beforeTime, afterTime})
+
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
   }
-
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
     ownerAddress: accounts[0],
@@ -863,7 +900,9 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       newReverseRegistrar && newReverseRegistrar._address,
     reverseRegistrarOwnerAddress: accounts[0],
     controllerAddress: newController._address,
-    baseRegistrarAddress: newBaseRegistrar._address
+    baseRegistrarAddress: newBaseRegistrar._address,
+    linearPriceOracle: linearPriceOracle._address,
+    dummyOracle: dummyOracle._address
   }
   let config = {
     columns: {
