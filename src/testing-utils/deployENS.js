@@ -24,7 +24,8 @@ const {
   legacyRegistrar: legacyRegistrarInterfaceId,
   permanentRegistrar: permanentRegistrarInterfaceId,
   permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId,
-  bulkRenewal: bulkRenewalInterfaceId
+  bulkRenewal: bulkRenewalInterfaceId,
+  linearPriceOracle: linearPriceOracleInterfaceId
 } = interfaces
 
 async function deployENS({ web3, accounts, dnssec = false }) {
@@ -670,10 +671,13 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       )
       .send({ from: accounts[0] })
 
-    let bulkRenewalAddress = await newResolverContract.interfaceImplementer(
+    await newResolverContract
+      .setInterface(
         namehash('eth'),
-        bulkRenewalInterfaceId
+        linearPriceOracleInterfaceId,
+        linearPriceOracle._address
       )
+      .send({ from: accounts[0] })
 
       //set notsoawesome to new resolver
     await newEnsContract
