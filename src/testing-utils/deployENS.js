@@ -562,8 +562,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     dummyOracleJSON,
     dummyOracleRate
   )
-  const premium = toBN('100000000000000000000') // 100 * 1e18
-  const decreaseRate = toBN('1000000000000000') // 100k secconds (about 1.15 day)
+  // Premium starting price: 10 ETH = 2000 USD
+  const premium = toBN('2000000000000000000000') // 2000 * 1e18
+  const decreaseDuration = toBN(28 * DAYS)
+  const decreaseRate = premium.div(decreaseDuration)
   const linearPriceOracle = await deploy(
     web3,
     accounts[0],
