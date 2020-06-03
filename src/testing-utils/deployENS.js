@@ -555,7 +555,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   // Create the new controller
 
   // Dummy oracle with 1 ETH == 200 USD
-  const dummyOracleRate = toBN(200000000000000000000) // 2 * 1e18
+  const dummyOracleRate = toBN(200000000000000000000) // 200 * 1e18
   const dummyOracle = await deploy(
     web3,
     accounts[0],
@@ -569,10 +569,13 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     accounts[0],
     linearPremiumPriceOracleJSON,
     dummyOracle._address,
-    [0, 0, 4, 2, 1],
+    // Oracle prices from https://etherscan.io/address/0xb9d374d0fe3d8341155663fae31b7beae0ae233a#events
+    // 0,0, 127, 32, 1
+    [0, 0, toBN(20294266869609), toBN(5073566717402), toBN(158548959919)],
     premium,
     decreaseRate
   )
+  const linearPriceOracleContract = linearPriceOracle.methods
 
   const newController = await deploy(
     web3,
@@ -882,6 +885,13 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     
     const afterTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)  
     console.log({beforeTime, afterTime})
+
+
+    const sixcharprice = await linearPriceOracleContract.price('somenonexsitingname122', 0, 12 * 30 * DAYS).call()
+    const fourcharprice = await linearPriceOracleContract.price('1234', 0, 12 * 30 * DAYS).call()
+    const threecharprice = await linearPriceOracleContract.price('123', 0, 12 * 30 * DAYS).call()
+
+    console.log({sixcharprice, fourcharprice, threecharprice})
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})

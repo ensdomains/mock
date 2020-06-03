@@ -41,9 +41,11 @@ export const registerName = async function(
   var minCommitmentAge = await controllerContract.minCommitmentAge().call()
   const time = await advanceTime(web3, parseInt(minCommitmentAge))
   await mine(web3)
+  const value = await controllerContract.rentPrice(name, duration).call()
+  console.log({name, duration, value})
   await controllerContract
     .register(name, account, duration, secret)
-    .send({ from: account, value: VALUE, gas: 6000000 })
+    .send({ from: account, value: value, gas: 6000000 })
 
   // The name should be no longer available
   newnameAvailable = await controllerContract.available(name).call()
