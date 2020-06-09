@@ -190,6 +190,14 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     nameLogger.record('auctionednofinalise.eth', {
       label: 'auctionednofinalise'
     })
+    await auctionLegacyName(
+      web3,
+      accounts[1],
+      legacyAuctionRegistrarContract,
+      'auctionedbysomeoneelse'
+    )
+    nameLogger.record('auctionedbysomeoneelse.eth', { label: 'auctionedbysomeoneelse' })
+
   }
 
   /* Setup the root reverse node */
@@ -748,12 +756,20 @@ async function deployENS({ web3, accounts, dnssec = false }) {
           migrated: true
         })
       }
-      let tx = await registrarMigrationContract
+      await registrarMigrationContract
         .migrateLegacy(sha3('auctionednofinalise'))
         .send({ from: accounts[0], gas: 6000000 })
 
       nameLogger.record(`auctionednofinalise.eth`, {
         label: 'auctionednofinalise',
+        migrated: true
+      })
+      await registrarMigrationContract
+        .migrateLegacy(sha3('auctionedbysomeoneelse'))
+        .send({ from: accounts[0], gas: 6000000 })
+
+      nameLogger.record(`auctionedbysomeoneelse.eth`, {
+        label: 'auctionedbysomeoneelse',
         migrated: true
       })
     } catch (e) {
