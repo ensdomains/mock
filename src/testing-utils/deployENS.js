@@ -563,15 +563,18 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   // Create the new controller
 
   // Dummy oracle with 1 ETH == 200 USD
-  const dummyOracleRate = toBN(200000000000000000000) // 200 * 1e18
+  const dummyOracleRate = toBN(20000000000) // 200 * 1e8
   const dummyOracle = await deploy(
     web3,
     accounts[0],
     dummyOracleJSON,
     dummyOracleRate
   )
+  const dummyOracleContract = dummyOracle.methods
+  const latestAnswer = await dummyOracleContract.latestAnswer().call()
+  console.log('Dummy USD Rate', {latestAnswer})
   // Premium starting price: 10 ETH = 2000 USD
-  const premium = toBN('2000000000000000000000') // 2000 * 1e18
+  const premium = toBN('200000000000') // 2000 * 1e8
   const decreaseDuration = toBN(28 * DAYS)
   const decreaseRate = premium.div(decreaseDuration)
   const linearPriceOracle = await deploy(
