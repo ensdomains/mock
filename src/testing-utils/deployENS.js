@@ -574,7 +574,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const latestAnswer = await dummyOracleContract.latestAnswer().call()
   console.log('Dummy USD Rate', {latestAnswer})
   // Premium starting price: 10 ETH = 2000 USD
-  const premium = toBN('200000000000') // 2000 * 1e8
+  const premium = toBN('2000000000000000000000') // 2000 * 1e18
   const decreaseDuration = toBN(28 * DAYS)
   const decreaseRate = premium.div(decreaseDuration)
   const linearPriceOracle = await deploy(
