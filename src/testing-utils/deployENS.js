@@ -894,14 +894,18 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     nameLogger.record('example.test', { label: 'example', migrated: true })
 
     const beforeTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)
-    await registerName(web3, accounts[0], newControllerContract, 'released', 30 * DAYS)
+    await registerName(web3, accounts[0], newControllerContract, 'released', (30 + 15) * DAYS)
     nameLogger.record('released', { label: 'released', migrated: true })
-    await registerName(web3, accounts[0], newControllerContract, 'rele', 30 * DAYS)
+    await registerName(web3, accounts[0], newControllerContract, 'rele', (30 + 15) * DAYS)
     nameLogger.record('rele', { label: 'rele', migrated: true })
-    await registerName(web3, accounts[0], newControllerContract, 'rel', 30 * DAYS)
+    await registerName(web3, accounts[0], newControllerContract, 'rel', (30 + 15) * DAYS)
     nameLogger.record('rel', { label: 'rel', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'onedaypremium', (30 + 28) * DAYS)
+    nameLogger.record('onedaypremium', { label: 'onedaypremium', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'justreleased', 30 * DAYS)
+    nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
 
-    await advanceTime(web3, 120 * DAYS + 1)
+    await advanceTime(web3, ((30 + 90) * DAYS) + 1)
     await mine(web3)
     
     const afterTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)  
