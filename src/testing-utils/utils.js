@@ -1,4 +1,5 @@
 import util from 'util'
+import moment from 'moment'
 export const DAYS = 24 * 60 * 60
 
 export const advanceTime = util.promisify(function(web3, delay, done) {
@@ -42,11 +43,25 @@ export const registerName = async function(
   const time = await advanceTime(web3, parseInt(minCommitmentAge))
   await mine(web3)
   const value = await controllerContract.rentPrice(name, duration).call()
-  console.log({name, duration, value})
-  await controllerContract
+  const trx = await controllerContract
     .register(name, account, duration, secret)
     .send({ from: account, value: value, gas: 6000000 })
+  
+  const registeredAt = moment((await web3.eth.getBlock('latest')).timestamp * 1000)
+  const expiresTimestamp = trx.events.NameRegistered.returnValues.expires
+  const expires = moment(expiresTimestamp * 1000)
+  const releasedDate = moment(expiresTimestamp * 1000).add(90, 'days')
+  const endOfPremiumDate = moment(expiresTimestamp * 1000).add(90 + 28, 'days')
 
+  console.log({
+    name,
+    registeredAt,
+    expiresTimestamp,
+    expires,
+    releasedDate,
+    endOfPremiumDate
+  })
+  
   // The name should be no longer available
   newnameAvailable = await controllerContract.available(name).call()
   if (newnameAvailable) throw `Failed to register "${name}"`
