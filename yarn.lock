@@ -876,10 +876,10 @@
     truffle "^5.0.5"
     web3-utils "^1.0.0-beta.48"
 
-"@ensdomains/ethregistrar@^2.0.3":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@ensdomains/ethregistrar/-/ethregistrar-2.0.3.tgz#8e9293b3be24e85dff565c70659fc626a215d315"
-  integrity sha512-qX2CSfCkgz82NZdw8Y89+/KqBBsZsZHG+TD+XcepRxSIS6eGeYwEcX+IApmNpzzgLoCUtP6u2hc4NP1xkkuxOg==
+"@ensdomains/ethregistrar@^2.0.4":
+  version "2.0.4"
+  resolved "https://registry.yarnpkg.com/@ensdomains/ethregistrar/-/ethregistrar-2.0.4.tgz#0dcf0679e37c2786a50caef96a9802cb7e7b93d4"
+  integrity sha512-Gjh5s57XlypU2A97UbSaUIYeAxKD7OpumWnJ1ZE73uohXTDq8pJoqStnmhVpBlvzNWp/aegW9ndpUr/tboM88A==
   dependencies:
     "@ensdomains/buffer" "0.0.10"
     "@ensdomains/dnsregistrar" "^0.3.5"
@@ -10172,9 +10172,9 @@ truffle@^5.1.17:
     original-require "1.0.1"
 
 truffle@^5.1.30:
-  version "5.1.30"
-  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.30.tgz#93d8fadfaf9ae58c05081569a026676d5f425364"
-  integrity sha512-wA88Ija0qO3ggzIEFMydg7FfxRqNRbYq1WVmb9Mdvx1D416RojRBotdML7KPH6T5lE6UKK8UeTalDTdG2KKqeQ==
+  version "5.1.31"
+  resolved "https://registry.yarnpkg.com/truffle/-/truffle-5.1.31.tgz#fbf1416a2855442189d124c03343b7f8523dadf2"
+  integrity sha512-T9CJ90qInf+/rFxSLdF/nhTZNUV8cZx70iO0EsqXWm6ibcC5/dzRDDfl6FC/xLndpnKZIhs4RJL0TEG7rLohJg==
   dependencies:
     app-module-path "^2.2.0"
     mocha "5.2.0"

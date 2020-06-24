@@ -52,7 +52,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
   const linearPremiumPriceOracleJSON = loadContract('ethregistrar', 'LinearPremiumPriceOracle')
   const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
-  
+  console.log({dummyOracleJSON: dummyOracleJSON.abi})
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
   const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
@@ -564,13 +564,16 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
   // Dummy oracle with 1 ETH == 200 USD
   const dummyOracleRate = toBN(20000000000) // 200 * 1e8
+  console.log('*** dummyOracle1', {dummyOracleRate})
   const dummyOracle = await deploy(
     web3,
     accounts[0],
     dummyOracleJSON,
     dummyOracleRate
   )
+  console.log('*** dummyOracle._address', dummyOracle._address)
   const dummyOracleContract = dummyOracle.methods
+  console.log('*** dummyOracleContract', dummyOracleContract)
   const latestAnswer = await dummyOracleContract.latestAnswer().call()
   console.log('Dummy USD Rate', {latestAnswer})
   // Premium starting price: 10 ETH = 2000 USD
