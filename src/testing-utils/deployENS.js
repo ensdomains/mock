@@ -1,4 +1,20 @@
 import deployDNSSEC from './deployDNSSEC'
+const { exec } = require("child_process");
+
+
+exec("head node_modules/@ensdomains/mock/node_modules/@ensdomains/ethregistrar/package.json", (error, stdout, stderr) => {
+  if (error) {
+      console.log(`error: ${error.message}`);
+      return;
+  }
+  if (stderr) {
+      console.log(`stderr: ${stderr}`);
+      return;
+  }
+  console.log(`stdout: ${stdout}`);
+});
+
+
 import {
   DAYS,
   advanceTime,
