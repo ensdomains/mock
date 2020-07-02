@@ -170,11 +170,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .send({ from: accounts[0] })
 
   const legacynames = [
-    'auctioned1',
-    'auctioned2',
-    'auctioned3',
-    'auctioned4',
-    'auctioned5'
+    'auctioned3'
   ]
 
   if (dnssec) {
@@ -340,13 +336,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'abittooawesome',
     'abittooawesome2',
     'abittooawesome3',
-    'abittooawesome4',
-    'abittooawesome5',
-    'abittooawesome6',
     'subdomaindummy',
-    'subdomain',
-    'contractdomain',
-    'ismoney'
+    'contractdomain'
   ]
 
   console.log('Register name')
@@ -366,7 +357,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const aBitTooAwesome = 'abittooawesome.eth'
   const aBitTooAwesome2 = 'abittooawesome2.eth'
   const aBitTooAwesome3 = 'abittooawesome3.eth'
-  const aBitTooAwesome4 = 'abittooawesome4.eth'
 
   async function addResolverAndRecords(name, resolverAddress) {
     console.log('Setting up ', name, 'with old resolver and records')
@@ -386,7 +376,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
   addResolverAndRecords(aBitTooAwesome2, resolver._address)
   addResolverAndRecords(aBitTooAwesome3, resolver._address)
-  addResolverAndRecords(aBitTooAwesome4, resolver._address)
 
   const contractdomain = namehash('contractdomain.eth')
 
