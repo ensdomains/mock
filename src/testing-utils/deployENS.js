@@ -170,6 +170,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .send({ from: accounts[0] })
 
   const legacynames = [
+    'auctioned2',
     'auctioned3'
   ]
 
@@ -213,7 +214,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       'auctionedbysomeoneelse'
     )
     nameLogger.record('auctionedbysomeoneelse.eth', { label: 'auctionedbysomeoneelse' })
-
   }
 
   /* Setup the root reverse node */
@@ -569,16 +569,13 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
   // Dummy oracle with 1 ETH == 200 USD
   const dummyOracleRate = toBN(20000000000) // 200 * 1e8
-  console.log('*** dummyOracle1', {dummyOracleRate})
   const dummyOracle = await deploy(
     web3,
     accounts[0],
     dummyOracleJSON,
     dummyOracleRate
   )
-  console.log('*** dummyOracle._address', dummyOracle._address)
   const dummyOracleContract = dummyOracle.methods
-  console.log('*** dummyOracleContract', dummyOracleContract)
   const latestAnswer = await dummyOracleContract.latestAnswer().call()
   console.log('Dummy USD Rate', {latestAnswer})
   // Premium starting price: 10 ETH = 2000 USD
@@ -819,9 +816,9 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     } catch (e) {
       console.log('Failed to migrate a name', e)
     }
-    console.log(`Releasing the deed of ${legacynames[0]}`)
+    console.log(`Releasing the deed of auctioned2`)
     await legacyAuctionRegistrarContract
-      .releaseDeed(sha3(legacynames[0]))
+      .releaseDeed(sha3('auctioned2'))
       .send({ from: accounts[0] })
     await newEnsContract
       .setResolver(namehash('resolver.eth'), newResolver._address)
@@ -913,10 +910,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     await registerName(web3, accounts[0], newControllerContract, 'onedaypremium', (baseDays - 27) * DAYS)
     nameLogger.record('onedaypremium', { label: 'onedaypremium', migrated: true })
     nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
-
     await advanceTime(web3, ((baseDays + 90) * DAYS) + 1)
     await mine(web3)
-    
     const afterTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)  
     console.log({beforeTime, afterTime})
 
