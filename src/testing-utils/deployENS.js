@@ -1,4 +1,20 @@
 import deployDNSSEC from './deployDNSSEC'
+const { exec } = require("child_process");
+
+
+exec("head node_modules/@ensdomains/mock/node_modules/@ensdomains/ethregistrar/package.json", (error, stdout, stderr) => {
+  if (error) {
+      console.log(`error: ${error.message}`);
+      return;
+  }
+  if (stderr) {
+      console.log(`stderr: ${stderr}`);
+      return;
+  }
+  console.log(`stdout: ${stdout}`);
+});
+
+
 import {
   DAYS,
   advanceTime,
@@ -19,14 +35,16 @@ const contenthash =
 const content =
   '0x736f6d65436f6e74656e74000000000000000000000000000000000000000000'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
-
+const toBN = require('web3-utils').toBN;
 const {
   legacyRegistrar: legacyRegistrarInterfaceId,
   permanentRegistrar: permanentRegistrarInterfaceId,
-  permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId
+  permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId,
+  bulkRenewal: bulkRenewalInterfaceId,
+  linearPriceOracle: linearPriceOracleInterfaceId
 } = interfaces
 
-async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
+async function deployENS({ web3, accounts, dnssec = false }) {
   const { sha3 } = web3.utils
 
   function namehash(name) {
@@ -47,8 +65,12 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   const resolverJSON = loadContract('resolver', 'PublicResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
-  const priceOracleJSON = loadContract('ethregistrar', 'SimplePriceOracle')
+  const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
+  const linearPremiumPriceOracleJSON = loadContract('ethregistrar', 'LinearPremiumPriceOracle')
+  const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
+  console.log({dummyOracleJSON: dummyOracleJSON.abi})
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
+  const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
   const legacyAuctionRegistrarSimplifiedJSON = loadContract(
     'ens',
@@ -148,11 +170,8 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     .send({ from: accounts[0] })
 
   const legacynames = [
-    'auctioned1',
     'auctioned2',
-    'auctioned3',
-    'auctioned4',
-    'auctioned5'
+    'auctioned3'
   ]
 
   if (dnssec) {
@@ -188,6 +207,13 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     nameLogger.record('auctionednofinalise.eth', {
       label: 'auctionednofinalise'
     })
+    await auctionLegacyName(
+      web3,
+      accounts[1],
+      legacyAuctionRegistrarContract,
+      'auctionedbysomeoneelse'
+    )
+    nameLogger.record('auctionedbysomeoneelse.eth', { label: 'auctionedbysomeoneelse' })
   }
 
   /* Setup the root reverse node */
@@ -310,13 +336,8 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     'abittooawesome',
     'abittooawesome2',
     'abittooawesome3',
-    'abittooawesome4',
-    'abittooawesome5',
-    'abittooawesome6',
     'subdomaindummy',
-    'subdomain',
-    'contractdomain',
-    'ismoney'
+    'contractdomain'
   ]
 
   console.log('Register name')
@@ -336,7 +357,6 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   const aBitTooAwesome = 'abittooawesome.eth'
   const aBitTooAwesome2 = 'abittooawesome2.eth'
   const aBitTooAwesome3 = 'abittooawesome3.eth'
-  const aBitTooAwesome4 = 'abittooawesome4.eth'
 
   async function addResolverAndRecords(name, resolverAddress) {
     console.log('Setting up ', name, 'with old resolver and records')
@@ -356,7 +376,6 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
 
   addResolverAndRecords(aBitTooAwesome2, resolver._address)
   addResolverAndRecords(aBitTooAwesome3, resolver._address)
-  addResolverAndRecords(aBitTooAwesome4, resolver._address)
 
   const contractdomain = namehash('contractdomain.eth')
 
@@ -555,17 +574,46 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
     .addController(accounts[0])
     .send({ from: accounts[0] })
   // Create the new controller
+
+  // Dummy oracle with 1 ETH == 200 USD
+  const dummyOracleRate = toBN(20000000000) // 200 * 1e8
+  const dummyOracle = await deploy(
+    web3,
+    accounts[0],
+    dummyOracleJSON,
+    dummyOracleRate
+  )
+  const dummyOracleContract = dummyOracle.methods
+  const latestAnswer = await dummyOracleContract.latestAnswer().call()
+  console.log('Dummy USD Rate', {latestAnswer})
+  // Premium starting price: 10 ETH = 2000 USD
+  const premium = toBN('2000000000000000000000') // 2000 * 1e18
+  const decreaseDuration = toBN(28 * DAYS)
+  const decreaseRate = premium.div(decreaseDuration)
+  const linearPriceOracle = await deploy(
+    web3,
+    accounts[0],
+    linearPremiumPriceOracleJSON,
+    dummyOracle._address,
+    // Oracle prices from https://etherscan.io/address/0xb9d374d0fe3d8341155663fae31b7beae0ae233a#events
+    // 0,0, 127, 32, 1
+    [0, 0, toBN(20294266869609), toBN(5073566717402), toBN(158548959919)],
+    premium,
+    decreaseRate
+  )
+  const linearPriceOracleContract = linearPriceOracle.methods
+
   const newController = await deploy(
     web3,
     accounts[0],
     controllerJSON,
     newBaseRegistrar._address,
-    priceOracle._address,
+    linearPriceOracle._address,
     2, // 10 mins in seconds
     86400 // 24 hours in seconds
   )
   const newControllerContract = newController.methods
-
+  
   // Create the new resolver
   const newResolver = await deploy(
     web3,
@@ -594,11 +642,23 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
 
     console.log('finished setting up', name)
   }
+
+  const bulkRenewal = await deploy(
+    web3,
+    accounts[0],
+    bulkRenewalJSON,
+    newEns._address
+  )
+
   let newTestRegistrar,
     newReverseRegistrar,
     registrarMigration,
     registrarMigrationContract
-  if (migrate) {
+
+  if (dnssec) {
+    // Redeploy under new registry
+    await deployDNSSEC(web3, accounts, newEns)
+  } else {
     await newEnsContract
       .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
       .send({ from: accounts[0] })
@@ -632,7 +692,23 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       )
       .send({ from: accounts[0] })
 
-    //set notsoawesome to new resolver
+    await newResolverContract
+      .setInterface(
+        namehash('eth'),
+        bulkRenewalInterfaceId,
+        bulkRenewal._address
+      )
+      .send({ from: accounts[0] })
+
+    await newResolverContract
+      .setInterface(
+        namehash('eth'),
+        linearPriceOracleInterfaceId,
+        linearPriceOracle._address
+      )
+      .send({ from: accounts[0] })
+
+      //set notsoawesome to new resolver
     await newEnsContract
       .setSubnodeOwner(ROOT_NODE, sha3('eth'), newBaseRegistrar._address)
       .send({ from: accounts[0] })
@@ -729,7 +805,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
           migrated: true
         })
       }
-      let tx = await registrarMigrationContract
+      await registrarMigrationContract
         .migrateLegacy(sha3('auctionednofinalise'))
         .send({ from: accounts[0], gas: 6000000 })
 
@@ -737,12 +813,20 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
         label: 'auctionednofinalise',
         migrated: true
       })
+      await registrarMigrationContract
+        .migrateLegacy(sha3('auctionedbysomeoneelse'))
+        .send({ from: accounts[0], gas: 6000000 })
+
+      nameLogger.record(`auctionedbysomeoneelse.eth`, {
+        label: 'auctionedbysomeoneelse',
+        migrated: true
+      })
     } catch (e) {
       console.log('Failed to migrate a name', e)
     }
-    console.log(`Releasing the deed of ${legacynames[0]}`)
+    console.log(`Releasing the deed of auctioned2`)
     await legacyAuctionRegistrarContract
-      .releaseDeed(sha3(legacynames[0]))
+      .releaseDeed(sha3('auctioned2'))
       .send({ from: accounts[0] })
     await newEnsContract
       .setResolver(namehash('resolver.eth'), newResolver._address)
@@ -773,6 +857,7 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       )
       .send({ from: accounts[0] })
     // Change the controller from migration registrarMigration to controller
+    nameLogger.record('original.subdomaindummy.eth', { label: 'original', migrated: true })
 
     console.log(
       `Add Controller ${newController._address}  to new base registrar`
@@ -821,20 +906,37 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       .send({ from: accounts[0] })
     nameLogger.record('example.test', { label: 'example', migrated: true })
 
+    const baseDays = 60
+    const beforeTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)
+    await registerName(web3, accounts[0], newControllerContract, 'justreleased', baseDays * DAYS)
+    await registerName(web3, accounts[0], newControllerContract, 'released', (baseDays - 15) * DAYS)
+    nameLogger.record('released', { label: 'released', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'rele', (baseDays - 15) * DAYS)
+    nameLogger.record('rele', { label: 'rele', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'rel', (baseDays - 15) * DAYS)
+    nameLogger.record('rel', { label: 'rel', migrated: true })
+    await registerName(web3, accounts[0], newControllerContract, 'onedaypremium', (baseDays - 27) * DAYS)
+    nameLogger.record('onedaypremium', { label: 'onedaypremium', migrated: true })
+    nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
+    await advanceTime(web3, ((baseDays + 90) * DAYS) + 1)
+    await mine(web3)
+    const afterTime = new Date((await web3.eth.getBlock('latest')).timestamp * 1000)  
+    console.log({beforeTime, afterTime})
+
+
+    const sixcharprice = await linearPriceOracleContract.price('somenonexsitingname122', 0, 12 * 30 * DAYS).call()
+    const fourcharprice = await linearPriceOracleContract.price('1234', 0, 12 * 30 * DAYS).call()
+    const threecharprice = await linearPriceOracleContract.price('123', 0, 12 * 30 * DAYS).call()
+
+    console.log({sixcharprice, fourcharprice, threecharprice})
+
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
-  } else {
-    console.log('Skipping migration')
   }
-
-  if (dnssec) {
-    // Redeploy under new registry
-    await deployDNSSEC(web3, accounts, newEns)
-  }
-
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
     ownerAddress: accounts[0],
+    bulkRenewalAddress: bulkRenewal._address,
     legacyAuctionRegistrarAddress: legacyAuctionRegistrar._address,
     oldEnsAddress: ens._address,
     oldContentResolverAddresses: [oldResolver._address],
@@ -849,7 +951,9 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
       newReverseRegistrar && newReverseRegistrar._address,
     reverseRegistrarOwnerAddress: accounts[0],
     controllerAddress: newController._address,
-    baseRegistrarAddress: newBaseRegistrar._address
+    baseRegistrarAddress: newBaseRegistrar._address,
+    linearPriceOracle: linearPriceOracle._address,
+    dummyOracle: dummyOracle._address
   }
   let config = {
     columns: {
@@ -872,6 +976,9 @@ async function deployENS({ web3, accounts, dnssec = false, migrate = true }) {
   console.log('Deployed contracts')
   console.log(output)
   console.log('Names')
+  const labels = nameLogger.generateTable()
+  response.labels = {}
+  labels.map((l, i) =>  i !== 0 ? response.labels[l[3].slice(2)] = l[2] : null )
   console.log(nameLogger.print())
   return response
 }
