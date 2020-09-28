@@ -128,5 +128,9 @@ export function deploy(web3, account, contractJSON, ...args) {
     .send({
       from: account,
       gas: 6700000
+    }).then((r) => {
+      console.log(`Deploying ${contractJSON.contractName} at ${r._address}`)
+      console.log(`  deployedBytecode ${r.deployedBytecode}`)
+      return r
     })
 }

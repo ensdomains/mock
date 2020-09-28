@@ -2,17 +2,17 @@ import deployDNSSEC from './deployDNSSEC'
 const { exec } = require("child_process");
 
 
-exec("head node_modules/@ensdomains/mock/node_modules/@ensdomains/ethregistrar/package.json", (error, stdout, stderr) => {
-  if (error) {
-      console.log(`error: ${error.message}`);
-      return;
-  }
-  if (stderr) {
-      console.log(`stderr: ${stderr}`);
-      return;
-  }
-  console.log(`stdout: ${stdout}`);
-});
+// exec("head node_modules/@ensdomains/mock/node_modules/@ensdomains/ethregistrar/package.json", (error, stdout, stderr) => {
+//   if (error) {
+//       console.log(`error: ${error.message}`);
+//       return;
+//   }
+//   if (stderr) {
+//       console.log(`stderr: ${stderr}`);
+//       return;
+//   }
+//   console.log(`stdout: ${stdout}`);
+// });
 
 
 import {
@@ -68,38 +68,16 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
   const linearPremiumPriceOracleJSON = loadContract('ethregistrar', 'LinearPremiumPriceOracle')
   const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
-  console.log({dummyOracleJSON: dummyOracleJSON.abi})
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
   const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
-  const legacyAuctionRegistrarSimplifiedJSON = loadContract(
-    'ens',
-    'HashRegistrar'
-  )
-  const ENSWithFallbackJSON = loadContract(
-    'ethregistrar',
-    'ENSRegistryWithFallback'
-  )
-  const oldBaseRegistrarJSON = loadContract(
-    'ethregistrar',
-    'OldBaseRegistrarImplementation'
-  )
-  const newBaseRegistrarJSON = loadContract(
-    'ethregistrar',
-    'BaseRegistrarImplementation'
-  )
-  const registrarMigrationJSON = loadContract(
-    'ethregistrar',
-    'RegistrarMigration'
-  )
-  const EthRegistrarSubdomainRegistrarJSON = loadContract(
-    'subdomain-registrar',
-    'EthRegistrarSubdomainRegistrar'
-  )
-  const ENSMigrationSubdomainRegistrarJSON = loadContract(
-    'subdomain-registrar',
-    'ENSMigrationSubdomainRegistrar'
-  )
+  const legacyAuctionRegistrarSimplifiedJSON = loadContract('ens','HashRegistrar')
+  const ENSWithFallbackJSON = loadContract('ethregistrar','ENSRegistryWithFallback')
+  const oldBaseRegistrarJSON = loadContract('ethregistrar','OldBaseRegistrarImplementation')
+  const newBaseRegistrarJSON = loadContract('ethregistrar','BaseRegistrarImplementation')
+  const registrarMigrationJSON = loadContract('ethregistrar','RegistrarMigration')
+  const EthRegistrarSubdomainRegistrarJSON = loadContract('subdomain-registrar','EthRegistrarSubdomainRegistrar')
+  const ENSMigrationSubdomainRegistrarJSON = loadContract('subdomain-registrar','ENSMigrationSubdomainRegistrar')
 
   console.log('Deploying from account ', accounts[0])
 
@@ -135,7 +113,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     namehash('eth'),
     1493895600
   )
-
+  const code = await web3.eth.getCode(legacyAuctionRegistrar._address)
+  console.log('*** HashRegistrarcode', {code})
   const ensContract = ens.methods
   const resolverContract = resolver.methods
   const oldResolverContract = oldResolver.methods
