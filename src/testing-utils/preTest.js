@@ -51,4 +51,4 @@ export async function mockENS() {
     console.log(`Successfully wrote ENS address ${ensAddress} to .env.local`)
   })
 }
-mockENS()
+// mockENS()

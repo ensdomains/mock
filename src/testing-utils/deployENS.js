@@ -55,7 +55,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'LinearPremiumPriceOracle'
   )
   const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
-  console.log({ dummyOracleJSON: dummyOracleJSON.abi })
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
   const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
@@ -570,7 +569,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     decreaseRate
   )
   const linearPriceOracleContract = linearPriceOracle.methods
-
   const newController = await deploy(
     web3,
     accounts[0],
@@ -773,22 +771,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
           migrated: true,
         })
       }
-      await registrarMigrationContract
-        .migrateLegacy(sha3('auctionednofinalise'))
-        .send({ from: accounts[0], gas: 6000000 })
-
-      nameLogger.record(`auctionednofinalise.eth`, {
-        label: 'auctionednofinalise',
-        migrated: true,
-      })
-      // await registrarMigrationContract
-      //   .migrateLegacy(sha3('auctionedbysomeoneelse'))
-      //   .send({ from: accounts[0], gas: 6000000 })
-
-      // nameLogger.record(`auctionedbysomeoneelse.eth`, {
-      //   label: 'auctionedbysomeoneelse',
-      //   migrated: true
-      // })
     } catch (e) {
       console.log('Failed to migrate a name', e)
     }
