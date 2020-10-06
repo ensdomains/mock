@@ -1,20 +1,4 @@
 import deployDNSSEC from './deployDNSSEC'
-const { exec } = require('child_process')
-
-exec(
-  'head node_modules/@ensdomains/mock/node_modules/@ensdomains/ethregistrar/package.json',
-  (error, stdout, stderr) => {
-    if (error) {
-      console.log(`error: ${error.message}`)
-      return
-    }
-    if (stderr) {
-      console.log(`stderr: ${stderr}`)
-      return
-    }
-    console.log(`stdout: ${stdout}`)
-  }
-)
 
 import {
   DAYS,
@@ -23,8 +7,7 @@ import {
   registerName,
   auctionLegacyName,
   loadContract,
-  deploy,
-  auctionLegacyNameWithoutFinalise,
+  deploy
 } from './utils'
 import { table } from 'table'
 import { NameLogger } from './namelogger'
@@ -179,7 +162,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     console.log('*** Skipping auction to make DNSSEC work')
   } else {
     // Can migrate now
-    console.log('Auction legacy names')
+
     for (var i = 0; i < legacynames.length; i++) {
       await auctionLegacyName(
         web3,
@@ -199,24 +182,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       'auctionedtoorecent'
     )
     nameLogger.record('auctionedtoorecent.eth', { label: 'auctionedtoorecent' })
-    await auctionLegacyNameWithoutFinalise(
-      web3,
-      accounts[0],
-      legacyAuctionRegistrarContract,
-      'auctionednofinalise'
-    )
-    nameLogger.record('auctionednofinalise.eth', {
-      label: 'auctionednofinalise',
-    })
-    // await auctionLegacyName(
-    //   web3,
-    //   accounts[1],
-    //   legacyAuctionRegistrarContract,
-    //   'auctionedbysomeoneelse'
-    // )
-    // nameLogger.record('auctionedbysomeoneelse.eth', {
-    //   label: 'auctionedbysomeoneelse',
-    // })
   }
 
   /* Setup the root reverse node */
