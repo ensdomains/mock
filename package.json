@@ -1,13 +1,14 @@
 {
   "name": "@ensdomains/mock",
-  "version": "2.0.23",
+  "version": "2.0.29",
   "description": "ENS mock scripts",
   "main": "dist/index.js",
   "files": [
-    "src"
+    "dist"
   ],
   "scripts": {
     "test": "jest --watch --verbose",
+    "preTest": "node -r esm src/testing-utils/preTest.js",
     "build": "babel src -d dist --ignore src/**/*.test.js,**/__tests__/**",
     "pub": "yarn build && yarn publish"
   },

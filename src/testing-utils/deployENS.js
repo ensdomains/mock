@@ -1,20 +1,4 @@
 import deployDNSSEC from './deployDNSSEC'
-const { exec } = require('child_process')
-
-exec(
-  'head node_modules/@ensdomains/mock/node_modules/@ensdomains/ethregistrar/package.json',
-  (error, stdout, stderr) => {
-    if (error) {
-      console.log(`error: ${error.message}`)
-      return
-    }
-    if (stderr) {
-      console.log(`stderr: ${stderr}`)
-      return
-    }
-    console.log(`stdout: ${stdout}`)
-  }
-)
 
 import {
   DAYS,
@@ -23,8 +7,7 @@ import {
   registerName,
   auctionLegacyName,
   loadContract,
-  deploy,
-  auctionLegacyNameWithoutFinalise,
+  deploy
 } from './utils'
 import { table } from 'table'
 import { NameLogger } from './namelogger'
@@ -72,7 +55,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'LinearPremiumPriceOracle'
   )
   const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
-  console.log({ dummyOracleJSON: dummyOracleJSON.abi })
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
   const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
   const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
@@ -179,7 +161,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     console.log('*** Skipping auction to make DNSSEC work')
   } else {
     // Can migrate now
-    console.log('Auction legacy names')
+
     for (var i = 0; i < legacynames.length; i++) {
       await auctionLegacyName(
         web3,
@@ -192,15 +174,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     await advanceTime(web3, lockoutlength)
     await mine(web3)
     // Need to wait for the lock period to end
-    await auctionLegacyNameWithoutFinalise(
-      web3,
-      accounts[0],
-      legacyAuctionRegistrarContract,
-      'auctionednofinalise'
-    )
-    nameLogger.record('auctionednofinalise.eth', {
-      label: 'auctionednofinalise',
-    })
   }
 
   /* Setup the root reverse node */
@@ -589,7 +562,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     decreaseRate
   )
   const linearPriceOracleContract = linearPriceOracle.methods
-
   const newController = await deploy(
     web3,
     accounts[0],
@@ -792,14 +764,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
           migrated: true,
         })
       }
-      await registrarMigrationContract
-        .migrateLegacy(sha3('auctionednofinalise'))
-        .send({ from: accounts[0], gas: 6000000 })
-
-      nameLogger.record(`auctionednofinalise.eth`, {
-        label: 'auctionednofinalise',
-        migrated: true,
-      })
     } catch (e) {
       console.log('Failed to migrate a name', e)
     }
