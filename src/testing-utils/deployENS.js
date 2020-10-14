@@ -7,7 +7,7 @@ import {
   registerName,
   auctionLegacyName,
   loadContract,
-  deploy
+  deploy,
 } from './utils'
 import { table } from 'table'
 import { NameLogger } from './namelogger'
@@ -90,37 +90,43 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   console.log('Deploying from account ', accounts[0])
 
   /* Deploy the main contracts  */
-  const ens = await deploy(web3, accounts[0], registryJSON)
-  const resolver = await deploy(web3, accounts[0], resolverJSON, ens._address)
-  const oldResolver = await deploy(
-    web3,
-    accounts[0],
-    oldResolverJSON,
-    ens._address
-  )
-  const oldReverseRegistrar = await deploy(
-    web3,
-    accounts[0],
-    reverseRegistrarJSON,
-    ens._address,
-    resolver._address
-  )
-  const testRegistrar = await deploy(
-    web3,
-    accounts[0],
-    testRegistrarJSON,
-    ens._address,
-    namehash('test')
-  )
-  // Disabled for now as the deploy was throwing error and this is not in use.
-  const legacyAuctionRegistrar = await deploy(
-    web3,
-    accounts[0],
-    legacyAuctionRegistrarSimplifiedJSON,
-    ens._address,
-    namehash('eth'),
-    1493895600
-  )
+  try {
+    var ens = await deploy(web3, accounts[0], registryJSON)
+    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address)
+    var oldResolver = await deploy(
+      web3,
+      accounts[0],
+      oldResolverJSON,
+      ens._address
+    )
+    var oldReverseRegistrar = await deploy(
+      web3,
+      accounts[0],
+      reverseRegistrarJSON,
+      ens._address,
+      resolver._address
+    )
+    var testRegistrar = await deploy(
+      web3,
+      accounts[0],
+      testRegistrarJSON,
+      ens._address,
+      namehash('test')
+    )
+    // Disabled for now as the deploy was throwing error and this is not in use.
+    const startTime = (await web3.eth.getBlock('latest')).timestamp
+    console.log('startTime', startTime)
+    var legacyAuctionRegistrar = await deploy(
+      web3,
+      accounts[0],
+      legacyAuctionRegistrarSimplifiedJSON,
+      ens._address,
+      namehash('eth'),
+      startTime
+    )
+  } catch (e) {
+    console.log('deployment failed', e)
+  }
 
   const ensContract = ens.methods
   const resolverContract = resolver.methods
@@ -161,14 +167,17 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     console.log('*** Skipping auction to make DNSSEC work')
   } else {
     // Can migrate now
-
-    for (var i = 0; i < legacynames.length; i++) {
-      await auctionLegacyName(
-        web3,
-        accounts[0],
-        legacyAuctionRegistrarContract,
-        legacynames[i]
-      )
+    try {
+      for (var i = 0; i < legacynames.length; i++) {
+        await auctionLegacyName(
+          web3,
+          accounts[0],
+          legacyAuctionRegistrarContract,
+          legacynames[i]
+        )
+      }
+    } catch (e) {
+      console.log('auctioning Legacy name failed', e)
     }
     const lockoutlength = 60 * 60 * 24 * 190
     await advanceTime(web3, lockoutlength)

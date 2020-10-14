@@ -2,28 +2,28 @@ import util from 'util'
 import moment from 'moment'
 export const DAYS = 24 * 60 * 60
 
-export const advanceTime = util.promisify(function(web3, delay, done) {
+export const advanceTime = util.promisify(function (web3, delay, done) {
   return web3.currentProvider.send(
     {
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
-      params: [delay]
+      params: [delay],
     },
     done
   )
 })
 
-export const mine = util.promisify(function(web3, done) {
+export const mine = util.promisify(function (web3, done) {
   return web3.currentProvider.send(
     {
       jsonrpc: '2.0',
-      method: 'evm_mine'
+      method: 'evm_mine',
     },
     done
   )
 })
 
-export const registerName = async function(
+export const registerName = async function (
   web3,
   account,
   controllerContract,
@@ -46,8 +46,10 @@ export const registerName = async function(
   const trx = await controllerContract
     .register(name, account, duration, secret)
     .send({ from: account, value: value, gas: 6000000 })
-  
-  const registeredAt = moment((await web3.eth.getBlock('latest')).timestamp * 1000)
+
+  const registeredAt = moment(
+    (await web3.eth.getBlock('latest')).timestamp * 1000
+  )
   const expiresTimestamp = trx.events.NameRegistered.returnValues.expires
   const expires = moment(expiresTimestamp * 1000)
   const releasedDate = moment(expiresTimestamp * 1000).add(90, 'days')
@@ -59,9 +61,9 @@ export const registerName = async function(
     expiresTimestamp,
     expires,
     releasedDate,
-    endOfPremiumDate
+    endOfPremiumDate,
   })
-  
+
   // The name should be no longer available
   newnameAvailable = await controllerContract.available(name).call()
   if (newnameAvailable) throw `Failed to register "${name}"`
@@ -74,16 +76,22 @@ export async function auctionLegacyNameWithoutFinalise(
   name
 ) {
   let labelhash = web3.utils.sha3(name)
-  console.log(`Auctioning name ${name}.eth`)
-  let value = web3.utils.toWei('1', 'ether')
+  let value = web3.utils.toWei('10', 'ether')
   let salt = web3.utils.sha3('0x01')
   let auctionlength = 60 * 60 * 24 * 5
   let reveallength = 60 * 60 * 24 * 2
   let bidhash = await registrarContract
     .shaBid(labelhash, account, value, salt)
     .call()
+
+  let labelState = await registrarContract.state(labelhash).call()
+
   await registrarContract
-    .startAuctionsAndBid([labelhash], bidhash)
+    .startAuction(labelhash)
+    .send({ from: account, gas: 6000000 })
+
+  await registrarContract
+    .newBid(bidhash)
     .send({ from: account, value: value, gas: 6000000 })
   await registrarContract.state(labelhash).call()
   await advanceTime(web3, parseInt(auctionlength - reveallength + 100))
@@ -96,7 +104,7 @@ export async function auctionLegacyNameWithoutFinalise(
   await mine(web3)
 }
 
-export const auctionLegacyName = async function(
+export const auctionLegacyName = async function (
   web3,
   account,
   registrarContract,
@@ -104,6 +112,7 @@ export const auctionLegacyName = async function(
 ) {
   await auctionLegacyNameWithoutFinalise(web3, account, registrarContract, name)
   const labelhash = web3.utils.sha3(name)
+  console.log('labelhash', labelhash)
   await registrarContract.state(labelhash).call()
   await registrarContract
     .finalizeAuction(labelhash)
@@ -123,10 +132,10 @@ export function deploy(web3, account, contractJSON, ...args) {
   return contract
     .deploy({
       data: contractJSON.bytecode,
-      arguments: args
+      arguments: args,
     })
     .send({
       from: account,
-      gas: 6700000
+      gas: 6700000,
     })
 }
