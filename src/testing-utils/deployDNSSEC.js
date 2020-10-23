@@ -1,5 +1,8 @@
 const ROOT_NODE = '0x00000000000000000000000000000000'
 async function deployDNSSEC(web3, accounts, ens) {
+  console.log('***DnsRegistrar', {DnsRegistrar})
+  console.log('***DNSSEC', {DNSSEC})
+
   const { sha3 } = web3.utils
   function deploy(contractJSON, ...args) {
     const contract = new web3.eth.Contract(contractJSON.abi)

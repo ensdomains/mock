@@ -113,13 +113,16 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     namehash('test')
   )
   // Disabled for now as the deploy was throwing error and this is not in use.
+  // const startTime = (await web3.eth.getBlock('latest')).timestamp
+  const startTime = 1600000000
+  console.log({startTime, s: new Date(startTime * 1000)})
   const legacyAuctionRegistrar = await deploy(
     web3,
     accounts[0],
     legacyAuctionRegistrarSimplifiedJSON,
     ens._address,
     namehash('eth'),
-    1493895600
+    startTime
   )
 
   const ensContract = ens.methods
@@ -318,12 +321,12 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   }
 
   await registerName(web3, accounts[1], controllerContract, 'otherowner')
-  nameLogger.record(`otherowner.eth`, { label: 'otherowner' })
-  newnames.push('otherowner')
-  /* Setup domain with a resolver and addr/content */
-  const aBitTooAwesome = 'abittooawesome.eth'
-  const aBitTooAwesome2 = 'abittooawesome2.eth'
-  const aBitTooAwesome3 = 'abittooawesome3.eth'
+  // nameLogger.record(`otherowner.eth`, { label: 'otherowner' })
+  // newnames.push('otherowner')
+  // /* Setup domain with a resolver and addr/content */
+  // const aBitTooAwesome = 'abittooawesome.eth'
+  // const aBitTooAwesome2 = 'abittooawesome2.eth'
+  // const aBitTooAwesome3 = 'abittooawesome3.eth'
 
   async function addResolverAndRecords(name, resolverAddress) {
     console.log('Setting up ', name, 'with old resolver and records')
@@ -341,61 +344,61 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     console.log('finished setting up old resolver and records', name)
   }
 
-  addResolverAndRecords(aBitTooAwesome2, resolver._address)
-  addResolverAndRecords(aBitTooAwesome3, resolver._address)
+  // addResolverAndRecords(aBitTooAwesome2, resolver._address)
+  // addResolverAndRecords(aBitTooAwesome3, resolver._address)
 
-  const contractdomain = namehash('contractdomain.eth')
+  // const contractdomain = namehash('contractdomain.eth')
 
-  await ensContract
-    .setResolver(contractdomain, resolver._address)
-    .send({ from: accounts[0] })
-  await resolverContract
-    .setAddr(contractdomain, accounts[0])
-    .send({ from: accounts[0] })
-  await ensContract
-    .setOwner(contractdomain, testRegistrar._address)
-    .send({ from: accounts[0] })
-  await oldReverseRegistrarContract
-    .setName('abittooawesome.eth')
-    .send({ from: accounts[0], gas: 1000000 })
+  // await ensContract
+  //   .setResolver(contractdomain, resolver._address)
+  //   .send({ from: accounts[0] })
+  // await resolverContract
+  //   .setAddr(contractdomain, accounts[0])
+  //   .send({ from: accounts[0] })
+  // await ensContract
+  //   .setOwner(contractdomain, testRegistrar._address)
+  //   .send({ from: accounts[0] })
+  // await oldReverseRegistrarContract
+  //   .setName('abittooawesome.eth')
+  //   .send({ from: accounts[0], gas: 1000000 })
 
-  /* Point the resolver.eth's resolver to the public resolver */
-  console.log('Setting up resolvers')
-  await ensContract
-    .setResolver(namehash('resolver.eth'), resolver._address)
-    .send({
-      from: accounts[0],
-    })
-  await ensContract
-    .setResolver(namehash('oldresolver.eth'), oldResolver._address)
-    .send({ from: accounts[0] })
-  /* Resolve the resolver.eth address to the address of the public resolver */
-  await resolverContract
-    .setAddr(namehash('resolver.eth'), resolver._address)
-    .send({ from: accounts[0] })
-  /* Resolve the oldresolver.eth address to the address of the public resolver */
+  // /* Point the resolver.eth's resolver to the public resolver */
+  // console.log('Setting up resolvers')
+  // await ensContract
+  //   .setResolver(namehash('resolver.eth'), resolver._address)
+  //   .send({
+  //     from: accounts[0],
+  //   })
+  // await ensContract
+  //   .setResolver(namehash('oldresolver.eth'), oldResolver._address)
+  //   .send({ from: accounts[0] })
+  // /* Resolve the resolver.eth address to the address of the public resolver */
+  // await resolverContract
+  //   .setAddr(namehash('resolver.eth'), resolver._address)
+  //   .send({ from: accounts[0] })
+  // /* Resolve the oldresolver.eth address to the address of the public resolver */
 
-  await resolverContract
-    .setAddr(namehash('oldresolver.eth'), oldResolver._address)
-    .send({
-      from: accounts[0],
-    })
+  // await resolverContract
+  //   .setAddr(namehash('oldresolver.eth'), oldResolver._address)
+  //   .send({
+  //     from: accounts[0],
+  //   })
 
-  /* Resolve the resolver.eth content to a 32 byte content hash */
-  console.log('Setting up contenthash')
+  // /* Resolve the resolver.eth content to a 32 byte content hash */
+  // console.log('Setting up contenthash')
 
-  await resolverContract
-    .setContenthash(namehash('resolver.eth'), contenthash)
-    .send({ from: accounts[0], gas: 5000000 })
-  await oldResolverContract
-    .setContent(namehash('oldresolver.eth'), content)
-    .send({ from: accounts[0] })
+  // await resolverContract
+  //   .setContenthash(namehash('resolver.eth'), contenthash)
+  //   .send({ from: accounts[0], gas: 5000000 })
+  // await oldResolverContract
+  //   .setContent(namehash('oldresolver.eth'), content)
+  //   .send({ from: accounts[0] })
 
-  /* Setup a reverse for account[0] to eth tld  */
+  // /* Setup a reverse for account[0] to eth tld  */
 
-  await oldReverseRegistrarContract
-    .setName('eth')
-    .send({ from: accounts[2], gas: 1000000 })
+  // await oldReverseRegistrarContract
+  //   .setName('eth')
+  //   .send({ from: accounts[2], gas: 1000000 })
 
   await mine(web3)
   let current = await web3.eth.getBlock('latest')
@@ -403,95 +406,96 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const oldEns = ens
   let label = 'notmigrated'
 
-  await registerName(web3, accounts[0], controllerContract, label)
-  nameLogger.record(`${label}.eth`, { label: label })
+  // await registerName(web3, accounts[0], controllerContract, label)
+  // nameLogger.record(`${label}.eth`, { label: label })
 
-  await ensContract
-    .setSubnodeOwner(namehash('testing.eth'), sha3('sub1'), accounts[0])
-    .send({
-      from: accounts[0],
-    })
+  // await ensContract
+  //   .setSubnodeOwner(namehash('testing.eth'), sha3('sub1'), accounts[0])
+  //   .send({
+  //     from: accounts[0],
+  //   })
 
-  nameLogger.record(`sub1.testing.eth`, { label: 'sub1' })
-  await ensContract
-    .setSubnodeOwner(namehash('testing.eth'), sha3('sub2'), accounts[0])
-    .send({
-      from: accounts[0],
-    })
-  await ensContract
-    .setResolver(namehash('sub1.testing.eth'), resolver._address)
-    .send({ from: accounts[0] })
-  await ensContract
-    .setResolver(namehash('sub2.testing.eth'), resolver._address)
-    .send({ from: accounts[0] })
-  await resolverContract
-    .setAddr(namehash('sub2.testing.eth'), accounts[0])
-    .send({ from: accounts[0] })
+  // nameLogger.record(`sub1.testing.eth`, { label: 'sub1' })
+  // await ensContract
+  //   .setSubnodeOwner(namehash('testing.eth'), sha3('sub2'), accounts[0])
+  //   .send({
+  //     from: accounts[0],
+  //   })
+  // await ensContract
+  //   .setResolver(namehash('sub1.testing.eth'), resolver._address)
+  //   .send({ from: accounts[0] })
+  // await ensContract
+  //   .setResolver(namehash('sub2.testing.eth'), resolver._address)
+  //   .send({ from: accounts[0] })
+  // await resolverContract
+  //   .setAddr(namehash('sub2.testing.eth'), accounts[0])
+  //   .send({ from: accounts[0] })
 
-  await resolverContract['setAddr(bytes32,uint256,bytes)'](
-    namehash('sub2.testing.eth'),
-    0, //BTC
-    '0x76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac' //1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
-  ).send({ from: accounts[0] })
+  // await resolverContract['setAddr(bytes32,uint256,bytes)'](
+  //   namehash('sub2.testing.eth'),
+  //   0, //BTC
+  //   '0x76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac' //1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+  // ).send({ from: accounts[0] })
 
-  await resolverContract
-    .setContenthash(namehash('sub2.testing.eth'), contenthash)
-    .send({ gas: 5000000, from: accounts[0] })
+  // await resolverContract
+  //   .setContenthash(namehash('sub2.testing.eth'), contenthash)
+  //   .send({ gas: 5000000, from: accounts[0] })
 
-  nameLogger.record(`sub2.testing.eth`, { label: 'sub2' })
-  await ensContract
-    .setSubnodeOwner(namehash('sub2.testing.eth'), sha3('a1'), accounts[0])
-    .send({
-      from: accounts[0],
-    })
-  await ensContract
-    .setResolver(namehash('a1.sub2.testing.eth'), resolver._address)
-    .send({ from: accounts[0] })
-  await resolverContract
-    .setAddr(namehash('a1.sub2.testing.eth'), accounts[0])
-    .send({ from: accounts[0] })
-  nameLogger.record(`a1.sub2.testing.eth`, { label: 'a1' })
+  // nameLogger.record(`sub2.testing.eth`, { label: 'sub2' })
+  // await ensContract
+  //   .setSubnodeOwner(namehash('sub2.testing.eth'), sha3('a1'), accounts[0])
+  //   .send({
+  //     from: accounts[0],
+  //   })
+  // await ensContract
+  //   .setResolver(namehash('a1.sub2.testing.eth'), resolver._address)
+  //   .send({ from: accounts[0] })
+  // await resolverContract
+  //   .setAddr(namehash('a1.sub2.testing.eth'), accounts[0])
+  //   .send({ from: accounts[0] })
+  // nameLogger.record(`a1.sub2.testing.eth`, { label: 'a1' })
 
-  await ensContract
-    .setSubnodeOwner(namehash('otherowner.eth'), sha3('sub1'), accounts[0])
-    .send({ from: accounts[1] })
-  await ensContract
-    .setResolver(namehash('sub1.otherowner.eth'), resolver._address)
-    .send({ from: accounts[0] })
-  await resolverContract
-    .setAddr(namehash('sub1.otherowner.eth'), accounts[0])
-    .send({ from: accounts[0] })
-  nameLogger.record(`sub1.otherowner.eth`, { label: 'sub1' })
+  // await ensContract
+  //   .setSubnodeOwner(namehash('otherowner.eth'), sha3('sub1'), accounts[0])
+  //   .send({ from: accounts[1] })
+  // await ensContract
+  //   .setResolver(namehash('sub1.otherowner.eth'), resolver._address)
+  //   .send({ from: accounts[0] })
+  // await resolverContract
+  //   .setAddr(namehash('sub1.otherowner.eth'), accounts[0])
+  //   .send({ from: accounts[0] })
+  // nameLogger.record(`sub1.otherowner.eth`, { label: 'sub1' })
 
-  await ensContract
-    .setSubnodeOwner(namehash('otherowner.eth'), sha3('sub2'), accounts[1])
-    .send({ from: accounts[1] })
-  await ensContract
-    .setResolver(namehash('sub2.otherowner.eth'), resolver._address)
-    .send({ from: accounts[1] })
-  await resolverContract
-    .setAddr(namehash('sub2.otherowner.eth'), accounts[1])
-    .send({ from: accounts[1] })
-  nameLogger.record(`sub2.otherowner.eth`, { label: 'sub2' })
+  // await ensContract
+  //   .setSubnodeOwner(namehash('otherowner.eth'), sha3('sub2'), accounts[1])
+  //   .send({ from: accounts[1] })
+  // await ensContract
+  //   .setResolver(namehash('sub2.otherowner.eth'), resolver._address)
+  //   .send({ from: accounts[1] })
+  // await resolverContract
+  //   .setAddr(namehash('sub2.otherowner.eth'), accounts[1])
+  //   .send({ from: accounts[1] })
+  // nameLogger.record(`sub2.otherowner.eth`, { label: 'sub2' })
 
-  await ensContract
-    .setSubnodeOwner(namehash('testing.eth'), sha3('sub4'), accounts[1])
-    .send({ from: accounts[0] })
-  await ensContract
-    .setResolver(namehash('sub4.testing.eth'), resolver._address)
-    .send({ from: accounts[1] })
-  await resolverContract
-    .setAddr(namehash('sub4.testing.eth'), accounts[0])
-    .send({ from: accounts[1] })
-  await resolverContract['setAddr(bytes32,uint256,bytes)'](
-    namehash('sub4.testing.eth'),
-    0, //BTC
-    '0x76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac' //1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
-  ).send({ from: accounts[1] })
-  nameLogger.record(`sub4.testing.eth`, { label: 'sub4' })
+  // await ensContract
+  //   .setSubnodeOwner(namehash('testing.eth'), sha3('sub4'), accounts[1])
+  //   .send({ from: accounts[0] })
+  // await ensContract
+  //   .setResolver(namehash('sub4.testing.eth'), resolver._address)
+  //   .send({ from: accounts[1] })
+  // await resolverContract
+  //   .setAddr(namehash('sub4.testing.eth'), accounts[0])
+  //   .send({ from: accounts[1] })
+  // await resolverContract['setAddr(bytes32,uint256,bytes)'](
+  //   namehash('sub4.testing.eth'),
+  //   0, //BTC
+  //   '0x76a91462e907b15cbf27d5425399ebf6f0fb50ebb88f1888ac' //1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa
+  // ).send({ from: accounts[1] })
+  // nameLogger.record(`sub4.testing.eth`, { label: 'sub4' })
 
   if (dnssec) {
     // Deploy DNSSEC
+    console.log('***deploy DNSSEC')
     await deployDNSSEC(web3, accounts, ens)
   }
 
