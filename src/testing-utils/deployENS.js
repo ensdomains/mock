@@ -47,9 +47,11 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('ens', 'ENSRegistry')
   const resolverJSON = loadContract('resolver', 'PublicResolver')
-  const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
+  const oldResolverJSON = require('./abis/ens-022/PublicResolver')
+
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
-  const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
+  const priceOracleJSON = require('./abis/ethregistrar-202/SimplePriceOracle')
+
   const linearPremiumPriceOracleJSON = loadContract(
     'ethregistrar',
     'LinearPremiumPriceOracle'
