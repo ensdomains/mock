@@ -1,6 +1,6 @@
 {
   "name": "ensdomains-mock",
-  "version": "2.0.31",
+  "version": "2.0.32",
   "description": "ENS mock scripts",
   "main": "dist/index.js",
   "files": [
@@ -49,7 +49,8 @@
     "eth-ens-namehash": "^2.0.8",
     "lodash": "^4.17.11",
     "moment": "^2.26.0",
-    "table": "^5.4.6"
+    "table": "^5.4.6",
+    "web3": "^1.3.0"
   },
   "repository": {
     "type": "git",
@@ -58,8 +59,5 @@
   "bugs": {
     "url": "https://github.com/ensdomains/mock/issues"
   },
-  "homepage": "https://github.com/ensdomains/mock#readme",
-  "engines": {
-    "node": ">=15.1.0"
-  }
+  "homepage": "https://github.com/ensdomains/mock#readme"
 }
