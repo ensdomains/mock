@@ -1,3 +1,6 @@
+import {
+  loadContract
+} from './utils'
 const ROOT_NODE = '0x00000000000000000000000000000000'
 async function deployDNSSEC(web3, accounts, ens) {
   const { sha3 } = web3.utils
@@ -28,17 +31,13 @@ async function deployDNSSEC(web3, accounts, ens) {
     return node.toString()
   }
 
-  function loadContract(modName, contractName) {
-    return require(`@ensdomains/${modName}/build/contracts/${contractName}`)
-  }
-
   const RSASHA256Algorithm = loadContract('dnssec-oracle', 'RSASHA256Algorithm')
   const RSASHA1Algorithm = loadContract('dnssec-oracle', 'RSASHA1Algorithm')
   const SHA256Digest = loadContract('dnssec-oracle', 'SHA256Digest')
   const SHA1Digest = loadContract('dnssec-oracle', 'SHA1Digest')
   const SHA1NSEC3Digest = loadContract('dnssec-oracle', 'SHA1NSEC3Digest')
 
-  const dnsAnchors = require('@ensdomains/dnssec-oracle/lib/anchors')
+  const dnsAnchors = require('./anchors')
   const anchors = dnsAnchors.realEntries
   const DnsRegistrar = loadContract('dnsregistrar', 'DNSRegistrar')
   const DNSSEC = loadContract('dnssec-oracle', 'DNSSECImpl')
