@@ -120,7 +120,7 @@ export const auctionLegacyName = async function (
 }
 
 export function loadContract(modName, contractName) {
-  const loadpath = `${process.env.PWD}/node_modules/ensdomain-contracts/abis/${modName}/${contractName}.json`
+  const loadpath = `${process.env.PWD}/node_modules/@ensdomains/contracts/abis/${modName}/${contractName}.json`
   return require(loadpath)
 }
 
