@@ -1,6 +1,6 @@
 {
   "name": "ensdomains-mock",
-  "version": "2.0.34",
+  "version": "2.0.35",
   "description": "ENS mock scripts",
   "main": "dist/index.js",
   "files": [
@@ -45,6 +45,7 @@
     "@0xproject/utils": "^2.0.2",
     "@babel/runtime": "^7.4.4",
     "@ensdomains/contracts": "^0.0.1",
+    "@ensdomains/dnssec-oracle-anchors": "^0.0.1",
     "chalk": "^3.0.0",
     "cross-fetch": "^3.0.2",
     "dns-packet": "^5.2.1",

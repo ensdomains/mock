@@ -37,7 +37,7 @@ async function deployDNSSEC(web3, accounts, ens) {
   const SHA1Digest = loadContract('dnssec-oracle', 'SHA1Digest')
   const SHA1NSEC3Digest = loadContract('dnssec-oracle', 'SHA1NSEC3Digest')
 
-  const dnsAnchors = require('./anchors')
+  const dnsAnchors = require('@ensdomains/dnssec-oracle-anchors')
   const anchors = dnsAnchors.realEntries
   const DnsRegistrar = loadContract('dnsregistrar', 'DNSRegistrar')
   const DNSSEC = loadContract('dnssec-oracle', 'DNSSECImpl')
