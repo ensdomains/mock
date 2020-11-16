@@ -120,11 +120,8 @@ export const auctionLegacyName = async function (
 }
 
 export function loadContract(modName, contractName) {
-  if (modName === 'ens') {
-    const ens = require(`@ensdomains/ens`)
-    return ens[contractName]
-  }
-  return require(`@ensdomains/${modName}/build/contracts/${contractName}`)
+  const loadpath = `${process.env.PWD}/node_modules/@ensdomains/contracts/abis/${modName}/${contractName}.json`
+  return require(loadpath)
 }
 
 export function deploy(web3, account, contractJSON, ...args) {

@@ -50,6 +50,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
+
   const linearPremiumPriceOracleJSON = loadContract(
     'ethregistrar',
     'LinearPremiumPriceOracle'
@@ -113,9 +114,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       ens._address,
       namehash('test')
     )
-    // Disabled for now as the deploy was throwing error and this is not in use.
-    const startTime = (await web3.eth.getBlock('latest')).timestamp
-    console.log('startTime', startTime)
+    const eightweeks = (60 * 60 * 24 * 7 * 8)
+    const startTime = (await web3.eth.getBlock('latest')).timestamp - eightweeks
     var legacyAuctionRegistrar = await deploy(
       web3,
       accounts[0],
@@ -177,7 +177,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
         )
       }
     } catch (e) {
-      console.log('auctioning Legacy name failed', e)
+      console.log('auctioning Legacy name failed', { name:legacynames[i], e})
     }
     const lockoutlength = 60 * 60 * 24 * 190
     await advanceTime(web3, lockoutlength)
