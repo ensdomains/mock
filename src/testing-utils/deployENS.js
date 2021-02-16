@@ -309,6 +309,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'abittooawesome',
     'abittooawesome2',
     'abittooawesome3',
+    'abittooawesome4',
     'subdomaindummy',
     'contractdomain',
   ]
@@ -330,6 +331,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const aBitTooAwesome = 'abittooawesome.eth'
   const aBitTooAwesome2 = 'abittooawesome2.eth'
   const aBitTooAwesome3 = 'abittooawesome3.eth'
+  const aBitTooAwesome4 = 'abittooawesome4.eth'
 
   async function addResolverAndRecords(name, resolverAddress) {
     console.log('Setting up ', name, 'with old resolver and records')
@@ -349,6 +351,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
   addResolverAndRecords(aBitTooAwesome2, resolver._address)
   addResolverAndRecords(aBitTooAwesome3, resolver._address)
+  addResolverAndRecords(aBitTooAwesome4, resolver._address)
 
   const contractdomain = namehash('contractdomain.eth')
 
@@ -932,11 +935,11 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     console.log({ sixcharprice, fourcharprice, threecharprice })
 
     await newEnsContract
-      .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
+      .setResolver(namehash('abittooawesome4.eth'), newResolver._address)
       .send({ from: accounts[0] })
 
     await newResolverContract
-      .setContenthash(namehash('abittooawesome2.eth'), deprecated_contenthash)
+      .setContenthash(namehash('abittooawesome4.eth'), deprecated_contenthash)
       .send({ from: accounts[0] })
 
     // Disabled for now as configureDomain is throwing errorr
