@@ -19,6 +19,10 @@ const contenthash =
 const content =
   '0x736f6d65436f6e74656e74000000000000000000000000000000000000000000'
 const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
+
+// dnslink based ipns'app.uniswap.org'
+const deprecated_contenthash = '0xe5010170000f6170702e756e69737761702e6f7267'
+
 const toBN = require('web3-utils').toBN
 const {
   legacyRegistrar: legacyRegistrarInterfaceId,
@@ -926,6 +930,14 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       .call()
 
     console.log({ sixcharprice, fourcharprice, threecharprice })
+
+    await newEnsContract
+      .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
+      .send({ from: accounts[0] })
+
+    await newResolverContract
+      .setContenthash(namehash('abittooawesome2.eth'), deprecated_contenthash)
+      .send({ from: accounts[0] })
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
