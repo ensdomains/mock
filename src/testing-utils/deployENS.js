@@ -49,12 +49,11 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     return node.toString()
   }
   const nameLogger = new NameLogger({ sha3, namehash })
-  const registryJSON = loadContract('ens', 'ENSRegistry')
-  const resolverJSON = loadContract('resolver', 'PublicResolver')
+  const registryJSON = loadContract('registry', 'ENSRegistry')
+  const resolverJSON = loadContract('resolvers', 'PublicResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
-  const reverseRegistrarJSON = loadContract('ens', 'ReverseRegistrar')
+  const reverseRegistrarJSON = loadContract('registry', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
-
   const linearPremiumPriceOracleJSON = loadContract(
     'ethregistrar',
     'LinearPremiumPriceOracle'
@@ -62,17 +61,17 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
   const bulkRenewalJSON = loadContract('ethregistrar', 'BulkRenewal')
-  const testRegistrarJSON = loadContract('ens', 'TestRegistrar')
+  const testRegistrarJSON = loadContract('registry', 'TestRegistrar')
   const legacyAuctionRegistrarSimplifiedJSON = loadContract(
-    'ens',
+    'ens-022',
     'HashRegistrar'
   )
   const ENSWithFallbackJSON = loadContract(
-    'ethregistrar',
+    'registry',
     'ENSRegistryWithFallback'
   )
   const oldBaseRegistrarJSON = loadContract(
-    'ethregistrar',
+    'ethregistrar-202',
     'OldBaseRegistrarImplementation'
   )
   const newBaseRegistrarJSON = loadContract(
@@ -80,7 +79,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'BaseRegistrarImplementation'
   )
   const registrarMigrationJSON = loadContract(
-    'ethregistrar',
+    'ethregistrar-202',
     'RegistrarMigration'
   )
   const EthRegistrarSubdomainRegistrarJSON = loadContract(
@@ -91,7 +90,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'subdomain-registrar',
     'ENSMigrationSubdomainRegistrar'
   )
-
   console.log('Deploying from account ', accounts[0])
 
   /* Deploy the main contracts  */
