@@ -1,6 +1,7 @@
 import {
   loadContract
 } from './utils'
+import packet from 'dns-packet';
 const ROOT_NODE = '0x00000000000000000000000000000000'
 async function deployDNSSEC(web3, accounts, ens) {
   const { sha3 } = web3.utils
@@ -31,20 +32,26 @@ async function deployDNSSEC(web3, accounts, ens) {
     return node.toString()
   }
 
-  const RSASHA256Algorithm = loadContract('dnssec-oracle', 'RSASHA256Algorithm')
-  const RSASHA1Algorithm = loadContract('dnssec-oracle', 'RSASHA1Algorithm')
-  const SHA256Digest = loadContract('dnssec-oracle', 'SHA256Digest')
-  const SHA1Digest = loadContract('dnssec-oracle', 'SHA1Digest')
-  const SHA1NSEC3Digest = loadContract('dnssec-oracle', 'SHA1NSEC3Digest')
+  const RSASHA256Algorithm = loadContract('dnssec-oracle', 'algorithms/RSASHA256Algorithm')
+  const RSASHA1Algorithm = loadContract('dnssec-oracle', 'algorithms/RSASHA1Algorithm')
+  const SHA256Digest = loadContract('dnssec-oracle', 'digests/SHA256Digest')
+  const SHA1Digest = loadContract('dnssec-oracle', 'digests/SHA1Digest')
+  const SHA1NSEC3Digest = loadContract('dnssec-oracle', 'nsec3digests/SHA1NSEC3Digest')
 
   const dnsAnchors = require('@ensdomains/dnssec-oracle-anchors')
   const anchors = dnsAnchors.realEntries
   const DnsRegistrar = loadContract('dnsregistrar', 'DNSRegistrar')
+  const SimplePublicSuffixList = loadContract('dnsregistrar', 'SimplePublicSuffixList')
   const DNSSEC = loadContract('dnssec-oracle', 'DNSSECImpl')
-
+  
   /* Deploy the main contracts  */
   const dnssec = await deploy(DNSSEC, dnsAnchors.encode(anchors))
-  const registrar = await deploy(DnsRegistrar, dnssec._address, ens._address)
+  const suffixes = await deploy(SimplePublicSuffixList)
+  await suffixes.methods
+    .addPublicSuffixes(['0x' + packet.name.encode('xyz').toString('hex')])
+    .send({ from: accounts[0] });
+  
+  const registrar = await deploy(DnsRegistrar, dnssec._address, suffixes._address, ens._address)
   await ens.methods.setSubnodeOwner(ROOT_NODE, sha3('xyz'), registrar._address).send({ from: accounts[0] })
 
   var owner = await ens.methods.owner(namehash('xyz')).call()

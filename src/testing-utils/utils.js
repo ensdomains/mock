@@ -119,20 +119,18 @@ export const auctionLegacyName = async function (
     .send({ from: account, gas: 6000000 })
 }
 
-export function loadContract(modName, contractName) {
+export function loadContract(modName, contractPath) {
   let loadpath
-  if(['registry','resolvers','ethregistrar'].includes(modName)){
-    // return require('@ensdomains/ens-contracts')[contractName]
-    loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-contracts/artifacts/contracts/${modName}/${contractName}.sol/${contractName}.json`
-    return require(loadpath)
+  const contractName = contractPath.split('/').reverse()[0]
+  if(['ens-022','ethregistrar-202', 'subdomain-registrar'].includes(modName)){
+    loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-archived-contracts/abis/${modName}/${contractName}.json`
   }else{
-    loadpath = `${process.env.PWD}/node_modules/@ensdomains/contracts/abis/${modName}/${contractName}.json`
-    return require(loadpath)  
+    loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-contracts/artifacts/contracts/${modName}/${contractPath}.sol/${contractName}.json`
   }
+  return require(loadpath)
 }
 
 export function deploy(web3, account, contractJSON, ...args) {
-  console.log('**dploy', {contractJSON})
   const contract = new web3.eth.Contract(contractJSON.abi)
   return contract
     .deploy({
