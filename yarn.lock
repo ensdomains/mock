@@ -673,17 +673,17 @@
   resolved "https://registry.yarnpkg.com/@ensdomains/buffer/-/buffer-0.0.10.tgz#3b9f8b6a34c6160ae8a8cb8f0f033aa35c1a9970"
   integrity sha512-EOFqiWnN36EyyBAgHFTsabFcFICUALt41SiDm/4pAw4V36R4lD4wHcnZcqCYki9m1fMaeWGHrdqxmrMa8iiSTQ==
 
-"@ensdomains/contracts@^0.0.3":
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/@ensdomains/contracts/-/contracts-0.0.3.tgz#26dc5774398203d4bc73a2ce28c1ee7e62312dad"
-  integrity sha512-0D/pVkkYymxm/uU6c7WNJbZs+NfgrHAA2fIGBuWhD06Gqa3KEzWqy7BwOSZ+o7YDVhuIuQ2A46VY4l6Mmja3cg==
-
 "@ensdomains/dnssec-oracle-anchors@^0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@ensdomains/dnssec-oracle-anchors/-/dnssec-oracle-anchors-0.0.1.tgz#53c9100fe95f7c7102d66d8a69208bc6be39a049"
   integrity sha512-0I2TcOMwM83YpLkBaI/RLxu7kkic3/nUehIFsgIv5jc84FqrIzeYDYPCG0q6OnbooSmAsC36BJQcMLmUjON8Fg==
   dependencies:
     dns-packet "^5.2.1"
+
+"@ensdomains/ens-archived-contracts@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@ensdomains/ens-archived-contracts/-/ens-archived-contracts-0.0.1.tgz#557c27897f9022190b3d8fef64673ec33b4f4b1a"
+  integrity sha512-Wvtrms1/yyhEFkg88wUHe8mYx+ChLzWCnlBAAkW03eAl7d838UObvyxHMdF60pTTTZOrA1BH3waERydevxoOCw==
 
 "@ensdomains/ens-contracts@^0.0.2":
   version "0.0.2"
