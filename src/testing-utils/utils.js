@@ -119,8 +119,14 @@ export const auctionLegacyName = async function (
     .send({ from: account, gas: 6000000 })
 }
 
-export function loadContract(modName, contractName) {
-  const loadpath = `${process.env.PWD}/node_modules/@ensdomains/contracts/abis/${modName}/${contractName}.json`
+export function loadContract(modName, contractPath) {
+  let loadpath
+  const contractName = contractPath.split('/').reverse()[0]
+  if(['ens-022','ethregistrar-202', 'subdomain-registrar'].includes(modName)){
+    loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-archived-contracts/abis/${modName}/${contractName}.json`
+  }else{
+    loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-contracts/artifacts/contracts/${modName}/${contractPath}.sol/${contractName}.json`
+  }
   return require(loadpath)
 }
 
