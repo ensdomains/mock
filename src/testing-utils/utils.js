@@ -119,6 +119,11 @@ export const auctionLegacyName = async function (
     .send({ from: account, gas: 6000000 })
 }
 
+export function loadOldContract(modName, contractName){
+  const loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-archived-contracts/abis/${modName}/${contractName}.json`
+  return require(loadpath)
+}
+
 export function loadContract(modName, contractPath) {
   let loadpath
   const contractName = contractPath.split('/').reverse()[0]
