@@ -91,20 +91,16 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'ENSMigrationSubdomainRegistrar'
   )
   console.log('Deploying from account ', accounts[0])
-  console.log(1)
   /* Deploy the main contracts  */
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
-    console.log(2)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
-    console.log(3)
     var oldResolver = await deploy(
       web3,
       accounts[0],
       oldResolverJSON,
       ens._address
     )
-    console.log(4)
     var oldReverseRegistrar = await deploy(
       web3,
       accounts[0],
@@ -112,7 +108,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       ens._address,
       resolver._address
     )
-    console.log(5)
     var testRegistrar = await deploy(
       web3,
       accounts[0],
@@ -120,7 +115,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       ens._address,
       namehash('test')
     )
-    console.log(6)
     const eightweeks = (60 * 60 * 24 * 7 * 8)
     const startTime = (await web3.eth.getBlock('latest')).timestamp - eightweeks
     var legacyAuctionRegistrar = await deploy(
@@ -131,7 +125,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       namehash('eth'),
       startTime
     )
-    console.log(7)
   } catch (e) {
     console.log('deployment failed', e)
   }
@@ -562,7 +555,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const premium = toBN('2000000000000000000000') // 2000 * 1e18
   const decreaseDuration = toBN(28 * DAYS)
   const decreaseRate = premium.div(decreaseDuration)
-  console.log(1)
   const linearPriceOracle = await deploy(
     web3,
     accounts[0],
@@ -574,9 +566,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     premium,
     decreaseRate
   )
-  console.log(2)
   const linearPriceOracleContract = linearPriceOracle.methods
-  console.log(3)
   const newController = await deploy(
     web3,
     accounts[0],
@@ -586,7 +576,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     2, // 10 mins in seconds
     86400 // 24 hours in seconds
   )
-  console.log(4)
   const newControllerContract = newController.methods
 
   // Create the new resolver
@@ -597,7 +586,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     newEns._address,
     ZERO_ADDRESS
   )
-  console.log(5)
   const newResolverContract = newResolver.methods
   // Set resolver to the new ENS
   async function addNewResolverAndRecords(name) {
@@ -619,30 +607,25 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
     console.log('finished setting up', name)
   }
-  console.log(6)
   const bulkRenewal = await deploy(
     web3,
     accounts[0],
     bulkRenewalJSON,
     newEns._address
   )
-  console.log(7)
   let newTestRegistrar,
     newReverseRegistrar,
     registrarMigration,
     registrarMigrationContract
 
-  console.log(8)
   if (dnssec) {
     // Redeploy under new registry
     await deployDNSSEC(web3, accounts, newEns, newResolver)
   }
   if(true) {
-    console.log(9)
     await newEnsContract
       .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
       .send({ from: accounts[0] })
-    console.log(10)
     await newEnsContract
       .setResolver(namehash('eth'), newResolver._address)
       .send({ from: accounts[0], gas: 6000000 })
