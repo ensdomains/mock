@@ -636,7 +636,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   if (dnssec) {
     // Redeploy under new registry
     await deployDNSSEC(web3, accounts, newEns, newResolver)
-  } else {
+  }
+  if(true) {
     console.log(9)
     await newEnsContract
       .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
@@ -645,9 +646,9 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     await newEnsContract
       .setResolver(namehash('eth'), newResolver._address)
       .send({ from: accounts[0], gas: 6000000 })
-    // await newResolverContract
-    //   .setApprovalForAll(accounts[0], true)
-    //   .send({ from: accounts[0] })
+    await newResolverContract
+      .setApprovalForAll(newController._address, true)
+      .send({ from: accounts[0] })
 
     await newResolverContract
       .setInterface(
@@ -665,13 +666,15 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       .send({ from: accounts[0] })
 
     // We still need to know what legacyAuctionRegistrar is to check who can release deed.
-    await newResolverContract
+    if(!dnssec){
+      await newResolverContract
       .setInterface(
         namehash('eth'),
         legacyRegistrarInterfaceId,
         legacyAuctionRegistrar._address
       )
       .send({ from: accounts[0] })
+    }
 
     await newResolverContract
       .setInterface(
@@ -762,40 +765,42 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       console.log('Failed to migrate a name', e)
     }
 
-    console.log('Migrate legacy names')
-    try {
-      async function migrate(label) {
-        let name = label
-        let domain = `${name}.eth`
-        let labelhash = sha3(name)
-        console.log(`Migrate legacy ${domain}`)
-        await ensContract
-          .setResolver(namehash(domain), resolver._address)
-          .send({ from: accounts[0] })
-        await ensContract
-          .setTTL(namehash(domain), 123)
-          .send({ from: accounts[0] })
-        let tx = await registrarMigrationContract
-          .migrateLegacy(labelhash)
-          .send({ from: accounts[0], gas: 6000000 })
+    if(!dnssec){
+      console.log('Migrate legacy names')
+      try {
+        async function migrate(label) {
+          let name = label
+          let domain = `${name}.eth`
+          let labelhash = sha3(name)
+          console.log(`Migrate legacy ${domain}`)
+          await ensContract
+            .setResolver(namehash(domain), resolver._address)
+            .send({ from: accounts[0] })
+          await ensContract
+            .setTTL(namehash(domain), 123)
+            .send({ from: accounts[0] })
+          let tx = await registrarMigrationContract
+            .migrateLegacy(labelhash)
+            .send({ from: accounts[0], gas: 6000000 })
+        }
+        for (var i = 0; i < legacynames.length; i++) {
+          await migrate(legacynames[i])
+          nameLogger.record(`${legacynames[i]}.eth`, {
+            label: legacynames[i],
+            migrated: true,
+          })
+        }
+      } catch (e) {
+        console.log('Failed to migrate a name', e)
       }
-      for (var i = 0; i < legacynames.length; i++) {
-        await migrate(legacynames[i])
-        nameLogger.record(`${legacynames[i]}.eth`, {
-          label: legacynames[i],
-          migrated: true,
-        })
-      }
-    } catch (e) {
-      console.log('Failed to migrate a name', e)
+      console.log(`Releasing the deed of auctioned2`)
+      await legacyAuctionRegistrarContract
+        .releaseDeed(sha3('auctioned2'))
+        .send({ from: accounts[0] })
     }
-    console.log(`Releasing the deed of auctioned2`)
-    await legacyAuctionRegistrarContract
-      .releaseDeed(sha3('auctioned2'))
-      .send({ from: accounts[0] })
     await newEnsContract
       .setResolver(namehash('resolver.eth'), newResolver._address)
-      .send({ from: accounts[0] })
+      .send({ from: accounts[0] }) 
 
     console.log(
       'Set resolver.eth address to new resovler address',
@@ -921,8 +926,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       migrated: true,
     })
     nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
-    await advanceTime(web3, (baseDays + 90) * DAYS + 1)
-    await mine(web3)
+    if(!dnssec){
+      await advanceTime(web3, (baseDays + 90) * DAYS + 1)
+      await mine(web3)  
+    }
     const afterTime = new Date(
       (await web3.eth.getBlock('latest')).timestamp * 1000
     )
