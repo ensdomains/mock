@@ -56,13 +56,6 @@ async function deployDNSSEC(web3, accounts, ens, resolver) {
   
   const registrarOld = await deploy(DnsRegistrarOld, dnssecOld._address, ens._address)
   const registrarNew = await deploy(DnsRegistrarNew, dnssecNew._address, suffixes._address, ens._address)
-  console.log(1)
-  const dnssecClaimOldId = '0x1aa2e641'
-  const dnssecClaimNewId = '0x17d8f49b'
-  const isOldRegistrar = await registrarOld.methods.supportsInterface(dnssecClaimOldId).call()
-  const isNewRegistrar = await registrarNew.methods.supportsInterface(dnssecClaimNewId).call()
-  console.log(2, {isOldRegistrar, isNewRegistrar})
-  
   const rsasha256 = await deploy(RSASHA256Algorithm)
   const rsasha1 = await deploy(RSASHA1Algorithm)
   const sha256digest = await deploy(SHA256Digest)
