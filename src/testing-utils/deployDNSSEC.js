@@ -69,6 +69,11 @@ async function deployDNSSEC(web3, accounts, ens, resolver) {
   const sha1digest = await deploy(SHA1Digest)
   const sha1nsec3digest = await deploy(SHA1NSEC3Digest)
 
+  // Allow DNSRegistrar to set resolver on behalf of the user
+  await resolver.methods
+    .setApprovalForAll(registrarNew._address, true)
+    .send({ from: accounts[0] })
+
   async function setupDomain(dnssec, registrar, tld){
     await ens.methods.setSubnodeOwner(ROOT_NODE, sha3(tld), registrar._address).send({ from: accounts[0] })
 

@@ -500,11 +500,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   ).send({ from: accounts[1] })
   nameLogger.record(`sub4.testing.eth`, { label: 'sub4' })
 
-  if (dnssec) {
-    // Deploy DNSSEC
-    await deployDNSSEC(web3, accounts, ens)
-  }
-
   const oldSubdomainRegistrar = await deploy(
     web3,
     accounts[0],
@@ -640,7 +635,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   console.log(8)
   if (dnssec) {
     // Redeploy under new registry
-    await deployDNSSEC(web3, accounts, newEns)
+    await deployDNSSEC(web3, accounts, newEns, newResolver)
   } else {
     console.log(9)
     await newEnsContract
