@@ -1,4 +1,5 @@
 import deployDNSSEC from './deployDNSSEC'
+import nameWrapperJSON from '../abi/nameWrapper.json';
 
 import {
   DAYS,
@@ -34,6 +35,7 @@ const {
 
 async function deployENS({ web3, accounts, dnssec = false }) {
   const { sha3 } = web3.utils
+
 
   function namehash(name) {
     let node =
@@ -91,11 +93,20 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'ENSMigrationSubdomainRegistrar'
   )
   console.log('Deploying from account ', accounts[0])
-
   /* Deploy the main contracts  */
+
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
-    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address)
+    //public resolver now needs nameWrapper address
+    var nameWrapper = await deploy(
+        web3,
+        accounts[0],
+        nameWrapperJSON,
+        ens._address,
+        newBaseRegistrar._address,
+        '0x0000000000000000000000000000000000000000'
+    )
+    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, nameWrapper._address)
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -163,6 +174,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .setSubnodeOwner(ROOT_NODE, sha3('eth'), legacyAuctionRegistrar._address)
     .send({ from: accounts[0] })
 
+
   const legacynames = ['auctioned2', 'auctioned3']
 
   if (dnssec) {
@@ -192,6 +204,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .setSubnodeOwner(ROOT_NODE, sha3('reverse'), accounts[0])
     .send({ from: accounts[0] })
   nameLogger.record('reverse', { label: 'reverse' })
+
 
   await ensContract
     .setSubnodeOwner(namehash('reverse'), sha3('addr'), accounts[0])
@@ -240,6 +253,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     2, // 10 mins in seconds
     86400 // 24 hours in seconds
   )
+
+  debugger
 
   console.log('Successfully setup permanent registrar controller')
   const oldBaseRegistrarContract = oldBaseRegistrar.methods
@@ -407,6 +422,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const oldEns = ens
   let label = 'notmigrated'
 
+
   await registerName(web3, accounts[0], controllerContract, label)
   nameLogger.record(`${label}.eth`, { label: label })
 
@@ -545,6 +561,15 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .addController(accounts[0])
     .send({ from: accounts[0] })
   // Create the new controller
+
+  // var nameWrapper = await deploy(
+  //     web3,
+  //     accounts[0],
+  //     nameWrapperJSON,
+  //     ens._address,
+  //     newBaseRegistrar._address,
+  //     '0x0000000000000000000000000000000000000000'
+  // )
 
   // Dummy oracle with 1 ETH == 200 USD
   const dummyOracleRate = toBN(20000000000) // 200 * 1e8
@@ -899,6 +924,15 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     )
     nameLogger.record('rel', { label: 'rel', migrated: true })
     await registerName(
+        web3,
+        accounts[0],
+        newControllerContract,
+        'ens'
+    )
+    nameLogger.record('ens', { label: 'ens', migrated: true })
+
+
+    await registerName(
       web3,
       accounts[0],
       newControllerContract,
@@ -909,6 +943,21 @@ async function deployENS({ web3, accounts, dnssec = false }) {
       label: 'onedaypremium',
       migrated: true,
     })
+
+    await newEnsContract
+        .setSubnodeOwner(namehash('ens.eth'), sha3('wrapper'), accounts[0])
+        .send({ from: accounts[0] })
+
+    await newEnsContract
+        .setResolver(namehash('wrapper.ens.eth'), newResolver._address)
+        .send({ from: accounts[0] })
+
+    await newResolverContract
+        .setAddr(namehash('wrapper.ens.eth'), nameWrapper._address)
+        .send({ from: accounts[0] })
+
+
+
     nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
     await advanceTime(web3, (baseDays + 90) * DAYS + 1)
     await mine(web3)
@@ -961,6 +1010,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     baseRegistrarAddress: newBaseRegistrar._address,
     linearPriceOracle: linearPriceOracle._address,
     dummyOracle: dummyOracle._address,
+    nameWrapperAddress: nameWrapper._address
   }
   let config = {
     columns: {
