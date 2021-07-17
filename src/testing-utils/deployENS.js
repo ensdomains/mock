@@ -98,6 +98,21 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     //public resolver now needs nameWrapper address
+    // Create the new ENS registry and registrar
+    const newEns = await deploy(
+        web3,
+        accounts[0],
+        ENSWithFallbackJSON,
+        ens._address
+    )
+    const newEnsContract = newEns.methods
+    const newBaseRegistrar = await deploy(
+        web3,
+        accounts[0],
+        newBaseRegistrarJSON,
+        newEns._address,
+        namehash('eth')
+    )
     var nameWrapper = await deploy(
         web3,
         accounts[0],
@@ -541,21 +556,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   // // // Register a subdomain on the old subdomain registrar
   // await oldSubdomainRegistrarContract.register(sha3('ismoney'), 'jeff', accounts[0], ZERO_ADDRESS, newResolver._address).send({from: accounts[0]})
 
-  // Create the new ENS registry and registrar
-  const newEns = await deploy(
-    web3,
-    accounts[0],
-    ENSWithFallbackJSON,
-    oldEns._address
-  )
-  const newEnsContract = newEns.methods
-  const newBaseRegistrar = await deploy(
-    web3,
-    accounts[0],
-    newBaseRegistrarJSON,
-    newEns._address,
-    namehash('eth')
-  )
+
   const newBaseRegistrarContract = newBaseRegistrar.methods
   await newBaseRegistrarContract
     .addController(accounts[0])
