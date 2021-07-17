@@ -91,11 +91,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'ENSMigrationSubdomainRegistrar'
   )
   console.log('Deploying from account ', accounts[0])
-
   /* Deploy the main contracts  */
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
-    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address)
+    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -252,9 +251,9 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   await ensContract
     .setSubnodeOwner(ROOT_NODE, tldHash, accounts[0])
     .send({ from: accounts[0] })
-  await resolverContract
-    .setAuthorisation(namehash('eth'), accounts[0], true)
-    .send({ from: accounts[0] })
+  // await resolverContract
+  //   .setApprovalForAll(accounts[0], true)
+  //   .send({ from: accounts[0] })
 
   try {
     await resolverContract
@@ -494,11 +493,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   ).send({ from: accounts[1] })
   nameLogger.record(`sub4.testing.eth`, { label: 'sub4' })
 
-  if (dnssec) {
-    // Deploy DNSSEC
-    await deployDNSSEC(web3, accounts, ens)
-  }
-
   const oldSubdomainRegistrar = await deploy(
     web3,
     accounts[0],
@@ -589,7 +583,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     web3,
     accounts[0],
     resolverJSON,
-    newEns._address
+    newEns._address,
+    ZERO_ADDRESS
   )
   const newResolverContract = newResolver.methods
   // Set resolver to the new ENS
@@ -612,14 +607,12 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
     console.log('finished setting up', name)
   }
-
   const bulkRenewal = await deploy(
     web3,
     accounts[0],
     bulkRenewalJSON,
     newEns._address
   )
-
   let newTestRegistrar,
     newReverseRegistrar,
     registrarMigration,
@@ -627,130 +620,134 @@ async function deployENS({ web3, accounts, dnssec = false }) {
 
   if (dnssec) {
     // Redeploy under new registry
-    await deployDNSSEC(web3, accounts, newEns)
-  } else {
-    await newEnsContract
-      .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
-      .send({ from: accounts[0] })
-    await newEnsContract
-      .setResolver(namehash('eth'), newResolver._address)
-      .send({ from: accounts[0], gas: 6000000 })
-    await newResolverContract
-      .setAuthorisation(namehash('eth'), accounts[0], true)
-      .send({ from: accounts[0] })
-    await newResolverContract
-      .setInterface(
-        namehash('eth'),
-        permanentRegistrarInterfaceId,
-        newController._address
-      )
-      .send({ from: accounts[0] })
-    await newResolverContract
-      .setInterface(
-        namehash('eth'),
-        permanentRegistrarWithConfigInterfaceId,
-        newController._address
-      )
-      .send({ from: accounts[0] })
+    await deployDNSSEC(web3, accounts, newEns, newResolver)
+  }
+  await newEnsContract
+    .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
+    .send({ from: accounts[0] })
+  await newEnsContract
+    .setResolver(namehash('eth'), newResolver._address)
+    .send({ from: accounts[0], gas: 6000000 })
+  await newResolverContract
+    .setApprovalForAll(newController._address, true)
+    .send({ from: accounts[0] })
 
-    // We still need to know what legacyAuctionRegistrar is to check who can release deed.
-    await newResolverContract
-      .setInterface(
-        namehash('eth'),
-        legacyRegistrarInterfaceId,
-        legacyAuctionRegistrar._address
-      )
-      .send({ from: accounts[0] })
-
-    await newResolverContract
-      .setInterface(
-        namehash('eth'),
-        bulkRenewalInterfaceId,
-        bulkRenewal._address
-      )
-      .send({ from: accounts[0] })
-
-    await newResolverContract
-      .setInterface(
-        namehash('eth'),
-        linearPriceOracleInterfaceId,
-        linearPriceOracle._address
-      )
-      .send({ from: accounts[0] })
-
-    //set notsoawesome to new resolver
-    await newEnsContract
-      .setSubnodeOwner(ROOT_NODE, sha3('eth'), newBaseRegistrar._address)
-      .send({ from: accounts[0] })
-    nameLogger.record('eth', { label: 'eth', migrated: true })
-    newTestRegistrar = await deploy(
-      web3,
-      accounts[0],
-      testRegistrarJSON,
-      newEns._address,
-      namehash('test')
+  await newResolverContract
+    .setInterface(
+      namehash('eth'),
+      permanentRegistrarInterfaceId,
+      newController._address
     )
-    const newTestRegistrarContract = newTestRegistrar.methods
-    await newEnsContract
-      .setSubnodeOwner(ROOT_NODE, sha3('test'), newTestRegistrar._address)
-      .send({ from: accounts[0] })
-    nameLogger.record('test', { label: 'test', migrated: true })
-    newReverseRegistrar = await deploy(
-      web3,
-      accounts[0],
-      reverseRegistrarJSON,
-      newEns._address,
-      newResolver._address
+    .send({ from: accounts[0] })
+  await newResolverContract
+    .setInterface(
+      namehash('eth'),
+      permanentRegistrarWithConfigInterfaceId,
+      newController._address
     )
+    .send({ from: accounts[0] })
 
-    // Create the migration contract. Make it the owner of 'eth' on the old
-    registrarMigration = await deploy(
-      web3,
-      accounts[0],
-      registrarMigrationJSON,
-      oldBaseRegistrar._address,
-      newBaseRegistrar._address,
-      oldSubdomainRegistrar._address,
-      subdomainRegistrar._address
+  // We still need to know what legacyAuctionRegistrar is to check who can release deed.
+  if(!dnssec){
+    await newResolverContract
+    .setInterface(
+      namehash('eth'),
+      legacyRegistrarInterfaceId,
+      legacyAuctionRegistrar._address
     )
-    registrarMigrationContract = registrarMigration.methods
-    await newBaseRegistrarContract
-      .addController(registrarMigration._address)
-      .send({ from: accounts[0] })
-    await ensContract
-      .setSubnodeOwner(ROOT_NODE, sha3('eth'), registrarMigration._address)
-      .send({ from: accounts[0] })
+    .send({ from: accounts[0] })
+  }
 
-    console.log('Migrating permanent registrar names')
-    try {
-      for (var i = 0; i < newnames.length; i++) {
-        let name = newnames[i]
-        let domain = `${name}.eth`
-        let labelhash = sha3(name)
-        nameLogger.record(domain, { label: name, migrated: true })
-        let owner = await ensContract.owner(namehash(domain))
-        if (owner === accounts[0]) {
-          await ensContract
-            .setTTL(namehash(domain), 123)
-            .send({ from: accounts[0] })
+  await newResolverContract
+    .setInterface(
+      namehash('eth'),
+      bulkRenewalInterfaceId,
+      bulkRenewal._address
+    )
+    .send({ from: accounts[0] })
 
-          await ensContract
-            .setResolver(namehash(domain), newResolver._address)
-            .send({ from: accounts[0] })
-        } else {
-          console.log(
-            `${domain} is not owned by ${accounts[0]} hence not setting ttl nor resolver`
-          )
-        }
+  await newResolverContract
+    .setInterface(
+      namehash('eth'),
+      linearPriceOracleInterfaceId,
+      linearPriceOracle._address
+    )
+    .send({ from: accounts[0] })
 
-        let tx = await registrarMigrationContract
-          .migrate(labelhash)
-          .send({ from: accounts[0], gas: 6000000 })
+  //set notsoawesome to new resolver
+  await newEnsContract
+    .setSubnodeOwner(ROOT_NODE, sha3('eth'), newBaseRegistrar._address)
+    .send({ from: accounts[0] })
+  nameLogger.record('eth', { label: 'eth', migrated: true })
+  newTestRegistrar = await deploy(
+    web3,
+    accounts[0],
+    testRegistrarJSON,
+    newEns._address,
+    namehash('test')
+  )
+  const newTestRegistrarContract = newTestRegistrar.methods
+  await newEnsContract
+    .setSubnodeOwner(ROOT_NODE, sha3('test'), newTestRegistrar._address)
+    .send({ from: accounts[0] })
+  nameLogger.record('test', { label: 'test', migrated: true })
+  newReverseRegistrar = await deploy(
+    web3,
+    accounts[0],
+    reverseRegistrarJSON,
+    newEns._address,
+    newResolver._address
+  )
+
+  // Create the migration contract. Make it the owner of 'eth' on the old
+  registrarMigration = await deploy(
+    web3,
+    accounts[0],
+    registrarMigrationJSON,
+    oldBaseRegistrar._address,
+    newBaseRegistrar._address,
+    oldSubdomainRegistrar._address,
+    subdomainRegistrar._address
+  )
+  registrarMigrationContract = registrarMigration.methods
+  await newBaseRegistrarContract
+    .addController(registrarMigration._address)
+    .send({ from: accounts[0] })
+  await ensContract
+    .setSubnodeOwner(ROOT_NODE, sha3('eth'), registrarMigration._address)
+    .send({ from: accounts[0] })
+
+  console.log('Migrating permanent registrar names')
+  try {
+    for (var i = 0; i < newnames.length; i++) {
+      let name = newnames[i]
+      let domain = `${name}.eth`
+      let labelhash = sha3(name)
+      nameLogger.record(domain, { label: name, migrated: true })
+      let owner = await ensContract.owner(namehash(domain))
+      if (owner === accounts[0]) {
+        await ensContract
+          .setTTL(namehash(domain), 123)
+          .send({ from: accounts[0] })
+
+        await ensContract
+          .setResolver(namehash(domain), newResolver._address)
+          .send({ from: accounts[0] })
+      } else {
+        console.log(
+          `${domain} is not owned by ${accounts[0]} hence not setting ttl nor resolver`
+        )
       }
-    } catch (e) {
-      console.log('Failed to migrate a name', e)
-    }
 
+      let tx = await registrarMigrationContract
+        .migrate(labelhash)
+        .send({ from: accounts[0], gas: 6000000 })
+    }
+  } catch (e) {
+    console.log('Failed to migrate a name', e)
+  }
+
+  if(!dnssec){
     console.log('Migrate legacy names')
     try {
       async function migrate(label) {
@@ -782,164 +779,168 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     await legacyAuctionRegistrarContract
       .releaseDeed(sha3('auctioned2'))
       .send({ from: accounts[0] })
+  }
+  await newEnsContract
+    .setResolver(namehash('resolver.eth'), newResolver._address)
+    .send({ from: accounts[0] }) 
+
+  console.log(
+    'Set resolver.eth address to new resovler address',
+    newResolver._address
+  )
+  await newResolverContract
+    .setAddr(namehash('resolver.eth'), newResolver._address)
+    .send({ from: accounts[0] })
+
+  await newEnsContract
+    .setSubnodeOwner(namehash('testing.eth'), sha3('sub3'), accounts[0])
+    .send({ from: accounts[0] })
+  nameLogger.record('testing.eth', { label: 'sub3', migrated: true })
+
+  await setNewResolver('notsoawesome.eth')
+  await addNewResolverAndRecords('abittooawesome.eth')
+  /* Setup some domains for subdomain testing */
+  console.log('Setting up subdomaindummy.eth')
+  await newEnsContract
+    .setSubnodeOwner(
+      namehash('subdomaindummy.eth'),
+      sha3('original'),
+      accounts[0]
+    )
+    .send({ from: accounts[0] })
+  // Change the controller from migration registrarMigration to controller
+  nameLogger.record('original.subdomaindummy.eth', {
+    label: 'original',
+    migrated: true,
+  })
+
+  console.log(
+    `Add Controller ${newController._address}  to new base registrar`
+  )
+  await newBaseRegistrarContract
+    .addController(newController._address)
+    .send({ from: accounts[0] })
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'aftermigration'
+  )
+  // Set default resolver to the new one
+
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'postmigration'
+  )
+  nameLogger.record('postmigration.eth', {
+    label: 'postmigration',
+    migrated: true,
+  })
+  await newEnsContract
+    .setSubnodeOwner(ROOT_NODE, sha3('reverse'), accounts[1])
+    .send({ from: accounts[0] })
+  nameLogger.record('reverse', { label: 'reverse', migrated: true })
+  await newEnsContract
+    .setSubnodeOwner(
+      namehash('reverse'),
+      sha3('addr'),
+      newReverseRegistrar._address
+    )
+    .send({ from: accounts[1] })
+  nameLogger.record('addr.reverse', { label: 'addr', migrated: true })
+  async function setNewResolver(name) {
     await newEnsContract
-      .setResolver(namehash('resolver.eth'), newResolver._address)
+      .setResolver(namehash(name), newResolver._address)
       .send({ from: accounts[0] })
+  }
 
-    console.log(
-      'Set resolver.eth address to new resovler address',
-      newResolver._address
-    )
-    await newResolverContract
-      .setAddr(namehash('resolver.eth'), newResolver._address)
-      .send({ from: accounts[0] })
+  await newTestRegistrarContract
+    .register(sha3('example'), accounts[0])
+    .send({ from: accounts[0] })
+  nameLogger.record('example.test', { label: 'example', migrated: true })
 
-    await newEnsContract
-      .setSubnodeOwner(namehash('testing.eth'), sha3('sub3'), accounts[0])
-      .send({ from: accounts[0] })
-    nameLogger.record('testing.eth', { label: 'sub3', migrated: true })
-
-    await setNewResolver('notsoawesome.eth')
-    await addNewResolverAndRecords('abittooawesome.eth')
-    /* Setup some domains for subdomain testing */
-    console.log('Setting up subdomaindummy.eth')
-    await newEnsContract
-      .setSubnodeOwner(
-        namehash('subdomaindummy.eth'),
-        sha3('original'),
-        accounts[0]
-      )
-      .send({ from: accounts[0] })
-    // Change the controller from migration registrarMigration to controller
-    nameLogger.record('original.subdomaindummy.eth', {
-      label: 'original',
-      migrated: true,
-    })
-
-    console.log(
-      `Add Controller ${newController._address}  to new base registrar`
-    )
-    await newBaseRegistrarContract
-      .addController(newController._address)
-      .send({ from: accounts[0] })
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'aftermigration'
-    )
-    // Set default resolver to the new one
-
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'postmigration'
-    )
-    nameLogger.record('postmigration.eth', {
-      label: 'postmigration',
-      migrated: true,
-    })
-    await newEnsContract
-      .setSubnodeOwner(ROOT_NODE, sha3('reverse'), accounts[1])
-      .send({ from: accounts[0] })
-    nameLogger.record('reverse', { label: 'reverse', migrated: true })
-    await newEnsContract
-      .setSubnodeOwner(
-        namehash('reverse'),
-        sha3('addr'),
-        newReverseRegistrar._address
-      )
-      .send({ from: accounts[1] })
-    nameLogger.record('addr.reverse', { label: 'addr', migrated: true })
-    async function setNewResolver(name) {
-      await newEnsContract
-        .setResolver(namehash(name), newResolver._address)
-        .send({ from: accounts[0] })
-    }
-
-    await newTestRegistrarContract
-      .register(sha3('example'), accounts[0])
-      .send({ from: accounts[0] })
-    nameLogger.record('example.test', { label: 'example', migrated: true })
-
-    const baseDays = 60
-    const beforeTime = new Date(
-      (await web3.eth.getBlock('latest')).timestamp * 1000
-    )
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'justreleased',
-      baseDays * DAYS
-    )
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'released',
-      (baseDays - 15) * DAYS
-    )
-    nameLogger.record('released', { label: 'released', migrated: true })
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'rele',
-      (baseDays - 15) * DAYS
-    )
-    nameLogger.record('rele', { label: 'rele', migrated: true })
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'rel',
-      (baseDays - 15) * DAYS
-    )
-    nameLogger.record('rel', { label: 'rel', migrated: true })
-    await registerName(
-      web3,
-      accounts[0],
-      newControllerContract,
-      'onedaypremium',
-      (baseDays - 27) * DAYS
-    )
-    nameLogger.record('onedaypremium', {
-      label: 'onedaypremium',
-      migrated: true,
-    })
-    nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
+  const baseDays = 60
+  const beforeTime = new Date(
+    (await web3.eth.getBlock('latest')).timestamp * 1000
+  )
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'justreleased',
+    baseDays * DAYS
+  )
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'released',
+    (baseDays - 15) * DAYS
+  )
+  nameLogger.record('released', { label: 'released', migrated: true })
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'rele',
+    (baseDays - 15) * DAYS
+  )
+  nameLogger.record('rele', { label: 'rele', migrated: true })
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'rel',
+    (baseDays - 15) * DAYS
+  )
+  nameLogger.record('rel', { label: 'rel', migrated: true })
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'onedaypremium',
+    (baseDays - 27) * DAYS
+  )
+  nameLogger.record('onedaypremium', {
+    label: 'onedaypremium',
+    migrated: true,
+  })
+  nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
+  if(!dnssec){
     await advanceTime(web3, (baseDays + 90) * DAYS + 1)
-    await mine(web3)
-    const afterTime = new Date(
-      (await web3.eth.getBlock('latest')).timestamp * 1000
-    )
-    console.log({ beforeTime, afterTime })
+    await mine(web3)  
+  }
+  const afterTime = new Date(
+    (await web3.eth.getBlock('latest')).timestamp * 1000
+  )
+  console.log({ beforeTime, afterTime })
 
-    const sixcharprice = await linearPriceOracleContract
-      .price('somenonexsitingname122', 0, 12 * 30 * DAYS)
-      .call()
-    const fourcharprice = await linearPriceOracleContract
-      .price('1234', 0, 12 * 30 * DAYS)
-      .call()
-    const threecharprice = await linearPriceOracleContract
-      .price('123', 0, 12 * 30 * DAYS)
-      .call()
+  const sixcharprice = await linearPriceOracleContract
+    .price('somenonexsitingname122', 0, 12 * 30 * DAYS)
+    .call()
+  const fourcharprice = await linearPriceOracleContract
+    .price('1234', 0, 12 * 30 * DAYS)
+    .call()
+  const threecharprice = await linearPriceOracleContract
+    .price('123', 0, 12 * 30 * DAYS)
+    .call()
 
-    console.log({ sixcharprice, fourcharprice, threecharprice })
+  console.log({ sixcharprice, fourcharprice, threecharprice })
 
-    await newEnsContract
-      .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
-      .send({ from: accounts[0] })
+  await newEnsContract
+    .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
+    .send({ from: accounts[0] })
 
-    await newResolverContract
-      .setContenthash(namehash('abittooawesome2.eth'), deprecated_contenthash)
-      .send({ from: accounts[0] })
+  await newResolverContract
+    .setContenthash(namehash('abittooawesome2.eth'), deprecated_contenthash)
+    .send({ from: accounts[0] })
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
-  }
+
+
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
     ownerAddress: accounts[0],
