@@ -327,25 +327,27 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const aBitTooAwesome = 'abittooawesome.eth'
   const aBitTooAwesome2 = 'abittooawesome2.eth'
   const aBitTooAwesome3 = 'abittooawesome3.eth'
+  const otherOwner = 'otherowner.eth'
 
-  async function addResolverAndRecords(name, resolverAddress) {
+  async function addResolverAndRecords(name, resolverAddress, account = accounts[0]) {
     console.log('Setting up ', name, 'with old resolver and records')
     const hash = namehash(name)
     await ensContract
       .setResolver(hash, resolverAddress)
-      .send({ from: accounts[0] })
+      .send({ from: account })
     await resolverContract
       .setAddr(hash, resolverAddress)
-      .send({ from: accounts[0] })
+      .send({ from: account })
 
     await resolverContract
       .setContenthash(hash, contenthash)
-      .send({ gas: 5000000, from: accounts[0] })
+      .send({ gas: 5000000, from: account })
     console.log('finished setting up old resolver and records', name)
   }
 
   addResolverAndRecords(aBitTooAwesome2, resolver._address)
   addResolverAndRecords(aBitTooAwesome3, resolver._address)
+  addResolverAndRecords(otherOwner, resolver._address, accounts[1])
 
   const contractdomain = namehash('contractdomain.eth')
 
