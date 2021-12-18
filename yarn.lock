@@ -700,15 +700,16 @@
     "@ensdomains/buffer" "^0.0.10"
     "@openzeppelin/contracts" "^4.1.0"
 
-"@ensdomains/ens-contracts@^0.0.4":
-  version "0.0.4"
-  resolved "https://registry.yarnpkg.com/@ensdomains/ens-contracts/-/ens-contracts-0.0.4.tgz#6ca7045c2d7b7e9605eebc0766445d3b743c4832"
-  integrity sha512-l5KfYaiRzm6Tx/4YEe+wW/Utmv4TBaOShiXrB0TTs1C8y2g3OjLmI24ymzJC78KvzexXokTrXj7ncLpxgCyHnQ==
+"@ensdomains/ens-contracts@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@ensdomains/ens-contracts/-/ens-contracts-0.0.7.tgz#a08dd7de3d927487c05a9c846b4834a124f053ce"
+  integrity sha512-adlWSrtBh85CNM1hsrsNxWrSx6g37DOCkWP5vBT/HtXnpNtvL49Z1Ueum55lN8YifTWo2Kqb1mgPojjLY99f5w==
   dependencies:
     "@ensdomains/buffer" "^0.0.13"
     "@ensdomains/solsha1" "0.0.3"
     "@openzeppelin/contracts" "^4.1.0"
-    dns-packet "^5.2.4"
+    dns-packet "^5.3.0"
+    name-wrapper "^1.0.0"
 
 "@ensdomains/ens@^0.4.4":
   version "0.4.5"
@@ -1691,6 +1692,11 @@
     "@types/istanbul-lib-coverage" "^2.0.0"
     "@types/istanbul-reports" "^1.1.1"
     "@types/yargs" "^12.0.9"
+
+"@leichtgewicht/ip-codec@^2.0.1":
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/@leichtgewicht/ip-codec/-/ip-codec-2.0.3.tgz#0300943770e04231041a51bd39f0439b5c7ab4f0"
+  integrity sha512-nkalE/f1RvRGChwBnEIoBfSEYOXnCRdleKuv6+lePbMDrMZXeDQnqak5XDOeBgrPPyPfAdcCu/B5z+v3VhplGg==
 
 "@nomiclabs/hardhat-ethers@^2.0.0":
   version "2.0.2"
@@ -4587,12 +4593,12 @@ dns-packet@^5.2.1:
   dependencies:
     ip "^1.1.5"
 
-dns-packet@^5.2.4:
-  version "5.2.4"
-  resolved "https://registry.yarnpkg.com/dns-packet/-/dns-packet-5.2.4.tgz#e004f409eadfa8ec861964dcb9eb395884fcf67d"
-  integrity sha512-vgu5Bx5IV8mXmh/9cn1lzn+J7okFlXe1vBRp+kCBJXg1nBED6Z/Q4e+QaDxQRSozMr14p/VQmdXwsf/I2wGjUA==
+dns-packet@^5.3.0:
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/dns-packet/-/dns-packet-5.3.0.tgz#9a0f66118d3be176b828b911a842b0b1a4bdfd4f"
+  integrity sha512-Nce7YLu6YCgWRvOmDBsJMo9M5/jV3lEZ5vUWnWXYmwURvPylHvq7nkDWhNmk1ZQoZZOP7oQh/S0lSxbisKOfHg==
   dependencies:
-    ip "^1.1.5"
+    "@leichtgewicht/ip-codec" "^2.0.1"
 
 doctrine@1.5.0:
   version "1.5.0"
@@ -8912,7 +8918,7 @@ mute-stream@0.0.7:
   resolved "https://registry.yarnpkg.com/mute-stream/-/mute-stream-0.0.7.tgz#3075ce93bc21b8fab43e1bc4da7e8115ed1e7bab"
   integrity sha1-MHXOk7whuPq0PhvE2n6BFe0ee6s=
 
-name-wrapper@1.0.0:
+name-wrapper@1.0.0, name-wrapper@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/name-wrapper/-/name-wrapper-1.0.0.tgz#6e064a29b9c7806e18032fdbf620a01de48cdfbb"
   integrity sha512-7wTdz1ees+Q3GXFu/Mp76owXzWqYp+k2bB/W0yRnfFtnzU5Y8ga6VKbgl+UWYuCfndy0ylRSQpHPom/mEsDVqg==
