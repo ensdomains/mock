@@ -30,43 +30,47 @@ export const registerName = async function (
   name,
   duration = 365 * DAYS
 ) {
-  console.log(`Registering ${name}`)
-  const secret =
-    '0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'
-  const VALUE = duration + 1
-  let newnameAvailable = await controllerContract.available(name).call()
-  var commitment = await controllerContract
-    .makeCommitment(name, account, secret)
-    .call()
-  await controllerContract.commit(commitment).send({ from: account })
-  var minCommitmentAge = await controllerContract.minCommitmentAge().call()
-  const time = await advanceTime(web3, parseInt(minCommitmentAge))
-  await mine(web3)
-  const value = await controllerContract.rentPrice(name, duration).call()
-  const trx = await controllerContract
-    .register(name, account, duration, secret)
-    .send({ from: account, value: value, gas: 6000000 })
+  try {
+    console.log(`Registering ${name}`)
+    const secret =
+        '0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'
+    const VALUE = duration + 1
+    let newnameAvailable = await controllerContract.available(name).call()
+    var commitment = await controllerContract
+        .makeCommitment(name, account, secret)
+        .call()
+    await controllerContract.commit(commitment).send({ from: account })
+    var minCommitmentAge = await controllerContract.minCommitmentAge().call()
+    const time = await advanceTime(web3, parseInt(minCommitmentAge))
+    await mine(web3)
+    const value = await controllerContract.rentPrice(name, duration).call()
+    const trx = await controllerContract
+        .register(name, account, duration, secret)
+        .send({ from: account, value: value, gas: 6000000 })
 
-  const registeredAt = moment(
-    (await web3.eth.getBlock('latest')).timestamp * 1000
-  )
-  const expiresTimestamp = trx.events.NameRegistered.returnValues.expires
-  const expires = moment(expiresTimestamp * 1000)
-  const releasedDate = moment(expiresTimestamp * 1000).add(90, 'days')
-  const endOfPremiumDate = moment(expiresTimestamp * 1000).add(90 + 28, 'days')
+    const registeredAt = moment(
+        (await web3.eth.getBlock('latest')).timestamp * 1000
+    )
+    const expiresTimestamp = trx.events.NameRegistered.returnValues.expires
+    const expires = moment(expiresTimestamp * 1000)
+    const releasedDate = moment(expiresTimestamp * 1000).add(90, 'days')
+    const endOfPremiumDate = moment(expiresTimestamp * 1000).add(90 + 28, 'days')
 
-  console.log({
-    name,
-    registeredAt,
-    expiresTimestamp,
-    expires,
-    releasedDate,
-    endOfPremiumDate,
-  })
+    console.log({
+      name,
+      registeredAt,
+      expiresTimestamp,
+      expires,
+      releasedDate,
+      endOfPremiumDate,
+    })
 
-  // The name should be no longer available
-  newnameAvailable = await controllerContract.available(name).call()
-  if (newnameAvailable) throw `Failed to register "${name}"`
+    // The name should be no longer available
+    newnameAvailable = await controllerContract.available(name).call()
+    if (newnameAvailable) throw `Failed to register "${name}"`
+  } catch(e) {
+    console.log('Error registaring name: ', name, e)
+  }
 }
 
 export async function auctionLegacyNameWithoutFinalise(
@@ -117,6 +121,11 @@ export const auctionLegacyName = async function (
   await registrarContract
     .finalizeAuction(labelhash)
     .send({ from: account, gas: 6000000 })
+}
+
+export function loadOldContract(modName, contractName){
+  const loadpath = `${process.env.PWD}/node_modules/@ensdomains/ens-archived-contracts/abis/${modName}/${contractName}.json`
+  return require(loadpath)
 }
 
 export function loadContract(modName, contractPath) {
