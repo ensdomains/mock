@@ -51,6 +51,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
+  console.log('***1')
+  const offchainResolverJSON = loadContract('resolvers', 'OffchainResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('registry', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
@@ -95,6 +97,15 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
+    console.log('***2', accounts[0])
+    var offchainResolver = await deploy(
+      web3,
+      accounts[0],
+      offchainResolverJSON,
+      'http://localhost:8000/{sender}/{callData}.json',
+      [accounts[0]]
+    )
+    console.log('****offchainResolver3', {offchainResolver})
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -308,6 +319,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'abittooawesome3',
     'subdomaindummy',
     'contractdomain',
+    'offchain'
   ]
 
   console.log('Register name')
@@ -942,6 +954,11 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
 
+  console.log('***4', namehash('offchain.eth'), offchainResolver._address)
+  await newEnsContract
+    .setResolver(namehash('offchain.eth'), offchainResolver._address)
+    .send({ from: accounts[0] })
+
 
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
@@ -964,6 +981,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     baseRegistrarAddress: newBaseRegistrar._address,
     linearPriceOracle: linearPriceOracle._address,
     dummyOracle: dummyOracle._address,
+    offchainResolver: offchainResolver._address
   }
   let config = {
     columns: {

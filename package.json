@@ -46,6 +46,8 @@
     "@ensdomains/dnssec-oracle-anchors": "^0.0.1",
     "@ensdomains/ens-archived-contracts": "^0.0.1",
     "@ensdomains/ens-contracts": "^0.0.7",
+    "@nomiclabs/hardhat-truffle5": "^2.0.3",
+    "@nomiclabs/hardhat-web3": "^2.0.0",
     "chalk": "^3.0.0",
     "cross-fetch": "^3.0.2",
     "dns-packet": "^5.2.1",

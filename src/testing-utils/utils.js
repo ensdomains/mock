@@ -3,6 +3,13 @@ import moment from 'moment'
 export const DAYS = 24 * 60 * 60
 
 export const advanceTime = util.promisify(function (web3, delay, done) {
+  web3.currentProvider.send(
+    {
+      jsonrpc: '2.0',
+      method: 'evm_increaseTime',
+      params: [delay], id:0
+    }, (error, data) => { console.log('**** data1', {data, error})}
+  )
   return web3.currentProvider.send(
     {
       jsonrpc: '2.0',
@@ -75,6 +82,7 @@ export async function auctionLegacyNameWithoutFinalise(
   registrarContract,
   name
 ) {
+  console.log('***auctionLegacyNameWithoutFinalise1')
   let labelhash = web3.utils.sha3(name)
   let value = web3.utils.toWei('10', 'ether')
   let salt = web3.utils.sha3('0x01')
@@ -83,7 +91,7 @@ export async function auctionLegacyNameWithoutFinalise(
   let bidhash = await registrarContract
     .shaBid(labelhash, account, value, salt)
     .call()
-
+  console.log('***auctionLegacyNameWithoutFinalise2')
   let labelState = await registrarContract.state(labelhash).call()
 
   await registrarContract
@@ -94,14 +102,20 @@ export async function auctionLegacyNameWithoutFinalise(
     .newBid(bidhash)
     .send({ from: account, value: value, gas: 6000000 })
   await registrarContract.state(labelhash).call()
+  console.log('***auctionLegacyNameWithoutFinalise3', (await web3.eth.getBlock('latest')))
   await advanceTime(web3, parseInt(auctionlength - reveallength + 100))
+  console.log('***auctionLegacyNameWithoutFinalise4', (await web3.eth.getBlock('latest')))
   await mine(web3)
+  console.log('***auctionLegacyNameWithoutFinalise5', (await web3.eth.getBlock('latest')))
   await registrarContract.state(labelhash).call()
   await registrarContract
     .unsealBid(labelhash, value, salt)
     .send({ from: account, gas: 6000000 })
+  console.log('***auctionLegacyNameWithoutFinalise6',)
   await advanceTime(web3, parseInt(reveallength * 2))
+  console.log('***auctionLegacyNameWithoutFinalise7')
   await mine(web3)
+  console.log('***auctionLegacyNameWithoutFinalise8')
 }
 
 export const auctionLegacyName = async function (
@@ -137,6 +151,7 @@ export function loadContract(modName, contractPath) {
 
 export function deploy(web3, account, contractJSON, ...args) {
   const contract = new web3.eth.Contract(contractJSON.abi)
+  console.log('***333', args)
   return contract
     .deploy({
       data: contractJSON.bytecode,
