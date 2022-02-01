@@ -97,12 +97,13 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
-    console.log('***2', accounts[0])
+    var gatewayUrl = 'http://localhost:8000/{sender}/{data}.json'
+    console.log('***2', accounts[0], gatewayUrl)
     var offchainResolver = await deploy(
       web3,
       accounts[0],
       offchainResolverJSON,
-      'http://localhost:8000/{sender}/{callData}.json',
+      gatewayUrl,
       [accounts[0]]
     )
     console.log('****offchainResolver3', {offchainResolver})
@@ -319,7 +320,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'abittooawesome3',
     'subdomaindummy',
     'contractdomain',
-    'offchain'
+    'offchainexample'
   ]
 
   console.log('Register name')
@@ -954,11 +955,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
 
-  console.log('***4', namehash('offchain.eth'), offchainResolver._address)
+  console.log('***4', namehash('offchainexample.eth'), offchainResolver._address)
   await newEnsContract
-    .setResolver(namehash('offchain.eth'), offchainResolver._address)
+    .setResolver(namehash('offchainexample.eth'), offchainResolver._address)
     .send({ from: accounts[0] })
-
 
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
