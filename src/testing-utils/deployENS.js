@@ -97,8 +97,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
-    var gatewayUrl = 'http://localhost:8000/{sender}/{data}.json'
-    console.log('***2', accounts[0], gatewayUrl)
+    var GATEWAY_HOST = 'http://localhost:8000'
+    // demo url
+    // var GATEWAY_HOST = 'https://offchain-resolver-example.uc.r.appspot.com'
+    var gatewayUrl = `${GATEWAY_HOST}/{sender}/{data}.json`
     var offchainResolver = await deploy(
       web3,
       accounts[0],
