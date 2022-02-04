@@ -51,7 +51,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
-  console.log('***1')
   const offchainResolverJSON = loadContract('resolvers', 'OffchainResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('registry', 'ReverseRegistrar')
@@ -957,7 +956,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
 
-  console.log('***4', namehash('offchainexample.eth'), offchainResolver._address)
   await newEnsContract
     .setResolver(namehash('offchainexample.eth'), offchainResolver._address)
     .send({ from: accounts[0] })
