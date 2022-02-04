@@ -8,7 +8,7 @@ export const advanceTime = util.promisify(function (web3, delay, done) {
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
       params: [delay], id:0
-    }, (error, data) => { console.log('**** data1', {data, error})}
+    }, (error, data) => { }
   )
   return web3.currentProvider.send(
     {
