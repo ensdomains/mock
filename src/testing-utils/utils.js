@@ -3,18 +3,11 @@ import moment from 'moment'
 export const DAYS = 24 * 60 * 60
 
 export const advanceTime = util.promisify(function (web3, delay, done) {
-  web3.currentProvider.send(
-    {
-      jsonrpc: '2.0',
-      method: 'evm_increaseTime',
-      params: [delay], id:0
-    }, (error, data) => { }
-  )
   return web3.currentProvider.send(
     {
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
-      params: [delay],
+      params: [delay], id:0
     },
     done
   )
