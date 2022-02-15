@@ -322,7 +322,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'abittooawesome3',
     'subdomaindummy',
     'contractdomain',
-    'offchainexample'
+    'offchainexample',
+    'data'
   ]
 
   console.log('Register name')
@@ -945,6 +946,12 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .call()
 
   console.log({ sixcharprice, fourcharprice, threecharprice })
+  await newEnsContract
+    .setSubnodeOwner(namehash('data.eth'), sha3('eth-usd'), accounts[0])
+    .send({ from: accounts[0] })
+
+  await addNewResolverAndRecords('eth-usd.data.eth')
+  await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
 
   await newEnsContract
     .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
