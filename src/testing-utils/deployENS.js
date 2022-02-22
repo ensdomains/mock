@@ -547,8 +547,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   // Create the new controller
 
   console.log('Going to set dummy oracle')
-  // Dummy oracle with 1 ETH == 2000 USD
-  const dummyOracleRate = toBN(200000000)
+  // Dummy oracle with 1 ETH == 3000 USD
+  const dummyOracleRate = toBN(300000000 * 1000)
   const dummyOracle = await deploy(
     web3,
     accounts[0],
@@ -568,6 +568,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     // 0,0, 127, 32, 1
     // [0, 0, toBN(20294266869609), toBN(5073566717402), toBN(158548959919)],
     [0, 0, toBN(20294266869609), toBN(5073566717402), toBN(158548959919)],
+    21
   )
   console.log('****2', exponentialPremiumPriceOracle._address)
   const exponentialPremiumPriceOracleContract = exponentialPremiumPriceOracle.methods
@@ -921,7 +922,6 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   )
   console.log({ beforeTime, afterTime })
 
-  console.log(1)
   await newEnsContract
     .setSubnodeOwner(namehash('data.eth'), sha3('eth-usd'), accounts[0])
     .send({ from: accounts[0] })
@@ -952,7 +952,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     const contractResult = await exponentialPremiumPriceOracleContract.price('somenonexsitingname122', expiryDate , 365 * DAY).call()
 
     const jsResult = exponentialReduceFloatingPoint(1000000, i)
-    console.log({ i, expiryDate:new Date(expiryDate *1000), jsResult, contractResult })
+    console.log([ i, new Date(expiryDate *1000), jsResult, contractResult ].join('\t'))
   }
 
 
