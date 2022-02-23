@@ -10,6 +10,7 @@
     "test": "jest --watch --verbose",
     "preTest": "node -r esm src/testing-utils/invokePreTest.js",
     "preTest:dnssec": "node -r esm src/testing-utils/invokePreTest.js dnssec",
+    "preTest:exponential": "node -r esm src/testing-utils/invokePreTest.js exponential",
     "build": "babel src -d dist --copy-files --ignore src/**/*.test.js,**/__tests__/**",
     "pub": "yarn build && yarn publish"
   },
