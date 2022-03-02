@@ -981,20 +981,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   console.log(3, {oracleaddress})
   let oracleResolverAddress = await newEnsContract.resolver(namehash('eth-usd.data.eth')).call()
   console.log(4, {oracleResolverAddress, newResolverAddress:newResolver._address})
-  const START_PRICE = 100000000
-  const LAST_VALUE = START_PRICE * 0.5 ** 21
-  const HOUR = 60 * 60
-  const DAY = HOUR * 24
-  const ts = (await web3.eth.getBlock('latest')).timestamp - 90 * DAY
-
-  function exponentialReduceFloatingPoint(startPrice, days) {
-    const LAST_VALUE = startPrice * 0.5 ** 21
-    const premium = startPrice * 0.5 ** days
-    if (premium > LAST_VALUE) {
-      return (premium - LAST_VALUE).toFixed(2)
-    }
-    return 0
-  }
 
   function convert(price){
     return price / latestAnswer / 1000
@@ -1015,34 +1001,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     somerandomname2:convert(somerandomname2),
     abc:convert(abc)
   })
-  const basePrice = await exponentialPremiumPriceOracleContract.price('somenonexsitingname122', ts - (21 * DAY) , 365 * DAY).call()
-  console.log({basePrice, LAST_VALUE})
-  for (let i = 0; i < 21; i++) {
-    // const expectedPrice = ((100000000 - LAST_VALUE) / 2000) * 1e18 // ETH at $2000 for $1 mil in 18 decimal precision
-    const expiryDate = ts - (i * DAY)
-    const contractResult = await exponentialPremiumPriceOracleContract.price('somenonexsitingname122', expiryDate , 365 * DAY).call()
-    const contractResultUSD = (contractResult - basePrice) / latestAnswer / 1000
-    const jsResult = exponentialReduceFloatingPoint(START_PRICE, i)
-    console.log(['exponential', i, i * DAY, new Date(expiryDate *1000), contractResult / Math.pow(10,18), contractResultUSD, jsResult ].join('\t'))
-  }
-  for (let lastDay = 20; lastDay < 22; lastDay++) {
-    for (let i = 0; i < 24; i++) {
-      // const expectedPrice = ((100000000 - LAST_VALUE) / 2000) * 1e18 // ETH at $2000 for $1 mil in 18 decimal precision
-      const j = (lastDay * DAY) + (i * HOUR)
-      const expiryDate = ts - j
-      const contractResult = await exponentialPremiumPriceOracleContract.price('somenonexsitingname122', expiryDate , 365 * DAY).call()
-      const contractResultUSD = (contractResult - basePrice) / latestAnswer / 1000
-      const jsResult = exponentialReduceFloatingPoint(START_PRICE, j / DAY)
-      console.log(['exponential', (j / DAY).toFixed(2), j, new Date(expiryDate *1000), contractResult / Math.pow(10,18), contractResultUSD, jsResult ].join('\t'))
-    }
-  }
-  for (let i = 0; i < 28; i++) {
-    const expiryDate2 = ts - (i * DAY)
-    const contractResult2 = await linearPremiumPriceOracleContract.price('somenonexsitingname122', expiryDate2 , 365 * DAY).call()
-    console.log(['linear', i, new Date(expiryDate2 *1000), contractResult2 ].join('\t'))
-  }
-
-
   await newEnsContract
     .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
     .send({ from: accounts[0] })
