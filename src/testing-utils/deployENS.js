@@ -967,7 +967,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .setSubnodeOwner(namehash('ens.eth'), sha3('oracle'), accounts[0])
     .send({ from: accounts[0] })
 
-  console.log(2)
   await addNewResolverAndRecords('eth-usd.data.eth')
   await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
   await addNewResolverAndRecords('oracle.ens.eth')
@@ -977,30 +976,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     exponential ? 'exponential' : 'linear'
   ).send({from: accounts[0]})
 
-  let oracleaddress = await newResolverContract.addr(namehash('eth-usd.data.eth')).call()
-  console.log(3, {oracleaddress})
-  let oracleResolverAddress = await newEnsContract.resolver(namehash('eth-usd.data.eth')).call()
-  console.log(4, {oracleResolverAddress, newResolverAddress:newResolver._address})
-
-  function convert(price){
-    return price / latestAnswer / 1000
-  }
-
-  const released = await newControllerContract.rentPrice('released', 0).call()
-  const released2 = await newControllerContract.rentPrice('released', 365 * DAYS).call()
-  const justreleased = await newControllerContract.rentPrice('justreleased', 0).call()
-  const somerandomname = await newControllerContract.rentPrice('somerandomname', 0).call()
-  const somerandomname2 = await newControllerContract.rentPrice('somerandomname2', 0).call()
-  const abc = await newControllerContract.rentPrice('abc', 0).call()
-  console.log({
-    justreleased:convert(justreleased),
-    released:convert(released),
-    released2:convert(released2),
-    diff:convert(released2) - convert(released),
-    somerandomname:convert(somerandomname),
-    somerandomname2:convert(somerandomname2),
-    abc:convert(abc)
-  })
   await newEnsContract
     .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
     .send({ from: accounts[0] })
@@ -1011,7 +986,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
-
 
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
