@@ -46,7 +46,7 @@
     "@babel/runtime": "^7.4.4",
     "@ensdomains/dnssec-oracle-anchors": "^0.0.1",
     "@ensdomains/ens-archived-contracts": "^0.0.1",
-    "@ensdomains/ens-contracts": "^0.0.9",
+    "@ensdomains/ens-contracts": "^0.0.10",
     "chalk": "^3.0.0",
     "cross-fetch": "^3.0.2",
     "dns-packet": "^5.2.1",

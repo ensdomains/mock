@@ -687,10 +687,10 @@
   resolved "https://registry.yarnpkg.com/@ensdomains/ens-archived-contracts/-/ens-archived-contracts-0.0.1.tgz#557c27897f9022190b3d8fef64673ec33b4f4b1a"
   integrity sha512-Wvtrms1/yyhEFkg88wUHe8mYx+ChLzWCnlBAAkW03eAl7d838UObvyxHMdF60pTTTZOrA1BH3waERydevxoOCw==
 
-"@ensdomains/ens-contracts@^0.0.9":
-  version "0.0.9"
-  resolved "https://registry.yarnpkg.com/@ensdomains/ens-contracts/-/ens-contracts-0.0.9.tgz#3cde34c4cfa43a6a10145139b8ecba90c263fd2d"
-  integrity sha512-dKg1+LAxy5+2bH2z6J+j+t8IhJofC9XB4xV5n3UFSogsr66rNr6X0l4iTWWJfgA/9P+7Z4AI773iyFVXStVpLg==
+"@ensdomains/ens-contracts@^0.0.10":
+  version "0.0.10"
+  resolved "https://registry.yarnpkg.com/@ensdomains/ens-contracts/-/ens-contracts-0.0.10.tgz#faa61d579c1c41972232714b84d27afff8c5dbd8"
+  integrity sha512-/fsPJHgCTrJJT0eL+lemlPH4mMJzLAP7eGEP77X8BpCAj7IxST983G/N5nSZrSB56sTb0FWnp66GayU3faj3nQ==
   dependencies:
     "@ensdomains/buffer" "^0.0.13"
     "@ensdomains/solsha1" "0.0.3"
