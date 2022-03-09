@@ -1,6 +1,6 @@
 {
   "name": "@ensdomains/mock",
-  "version": "2.1.42",
+  "version": "2.1.46",
   "description": "ENS mock scripts",
   "main": "dist/index.js",
   "files": [
@@ -10,6 +10,7 @@
     "test": "jest --watch --verbose",
     "preTest": "node -r esm src/testing-utils/invokePreTest.js",
     "preTest:dnssec": "node -r esm src/testing-utils/invokePreTest.js dnssec",
+    "preTest:exponential": "node -r esm src/testing-utils/invokePreTest.js exponential",
     "build": "babel src -d dist --copy-files --ignore src/**/*.test.js,**/__tests__/**",
     "pub": "yarn build && yarn publish"
   },
@@ -45,7 +46,7 @@
     "@babel/runtime": "^7.4.4",
     "@ensdomains/dnssec-oracle-anchors": "^0.0.1",
     "@ensdomains/ens-archived-contracts": "^0.0.1",
-    "@ensdomains/ens-contracts": "^0.0.7",
+    "@ensdomains/ens-contracts": "^0.0.10",
     "chalk": "^3.0.0",
     "cross-fetch": "^3.0.2",
     "dns-packet": "^5.2.1",

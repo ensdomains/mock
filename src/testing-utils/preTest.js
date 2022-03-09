@@ -18,13 +18,13 @@ async function setupWeb3(customProvider) {
   }
 }
 
-export async function mockENS({dnssec}) {
+export async function mockENS({dnssec, exponential}) {
   var provider = new Web3.providers.HttpProvider('http://localhost:8545')
   var { web3 } = await setupWeb3(provider)
 
   const accounts = await getAccounts(web3)
 
-  const addresses = await deployTestEns({ web3, accounts, dnssec })
+  const addresses = await deployTestEns({ web3, accounts, dnssec, exponential })
   const {
     ensAddress,
     controllerAddress,
