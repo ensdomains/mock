@@ -29,12 +29,12 @@ const {
   permanentRegistrar: permanentRegistrarInterfaceId,
   permanentRegistrarWithConfig: permanentRegistrarWithConfigInterfaceId,
   bulkRenewal: bulkRenewalInterfaceId,
-  linearPriceOracle: linearPriceOracleInterfaceId,
+  linearPremiumPriceOracle: linearPremiumPriceOracleInterfaceId
 } = interfaces
 
-async function deployENS({ web3, accounts, dnssec = false }) {
+async function deployENS({ web3, accounts, dnssec = false, exponential = false }) {
   const { sha3 } = web3.utils
-
+  console.log({dnssec, exponential})
   function namehash(name) {
     let node =
       '0x0000000000000000000000000000000000000000000000000000000000000000'
@@ -59,6 +59,10 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const linearPremiumPriceOracleJSON = loadContract(
     'ethregistrar',
     'LinearPremiumPriceOracle'
+  )
+  const exponentialPremiumPriceOracleJSON = loadContract(
+    'ethregistrar',
+    'ExponentialPremiumPriceOracle'
   )
   const dummyOracleJSON = loadContract('ethregistrar', 'DummyOracle')
   const controllerJSON = loadContract('ethregistrar', 'ETHRegistrarController')
@@ -323,7 +327,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     'subdomaindummy',
     'contractdomain',
     'offchainexample',
-    'data'
+    'data',
+    'ens',
   ]
 
   console.log('Register name')
@@ -558,8 +563,9 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     .send({ from: accounts[0] })
   // Create the new controller
 
-  // Dummy oracle with 1 ETH == 200 USD
-  const dummyOracleRate = toBN(20000000000) // 200 * 1e8
+  console.log('Going to set dummy oracle')
+  // Dummy oracle with 1 ETH == 3000 USD
+  const dummyOracleRate = toBN(300000000 * 1000)
   const dummyOracle = await deploy(
     web3,
     accounts[0],
@@ -569,11 +575,11 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   const dummyOracleContract = dummyOracle.methods
   const latestAnswer = await dummyOracleContract.latestAnswer().call()
   console.log('Dummy USD Rate', { latestAnswer })
-  // Premium starting price: 10 ETH = 2000 USD
-  const premium = toBN('2000000000000000000000') // 2000 * 1e18
+  
+  const premium = toBN('100000000000000000000000') // 100000 * 1e18
   const decreaseDuration = toBN(28 * DAYS)
   const decreaseRate = premium.div(decreaseDuration)
-  const linearPriceOracle = await deploy(
+  const linearPremiumPriceOracle = await deploy(
     web3,
     accounts[0],
     linearPremiumPriceOracleJSON,
@@ -584,13 +590,27 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     premium,
     decreaseRate
   )
-  const linearPriceOracleContract = linearPriceOracle.methods
+
+  const exponentialPremiumPriceOracle = await deploy(
+    web3,
+    accounts[0],
+    exponentialPremiumPriceOracleJSON,
+    dummyOracle._address,
+    // Oracle prices from https://etherscan.io/address/0xb9d374d0fe3d8341155663fae31b7beae0ae233a#events
+    // 0,0, 127, 32, 1
+    // [0, 0, toBN(20294266869609), toBN(5073566717402), toBN(158548959919)],
+    [0, 0, toBN(20294266869609), toBN(5073566717402), toBN(158548959919)],
+    21
+  )
+  const linearPremiumPriceOracleContract = linearPremiumPriceOracle.methods
+  const exponentialPremiumPriceOracleContract = exponentialPremiumPriceOracle.methods
+
   const newController = await deploy(
     web3,
     accounts[0],
     controllerJSON,
     newBaseRegistrar._address,
-    linearPriceOracle._address,
+    exponential ? exponentialPremiumPriceOracle._address : linearPremiumPriceOracle._address,
     2, // 10 mins in seconds
     86400 // 24 hours in seconds
   )
@@ -687,8 +707,8 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   await newResolverContract
     .setInterface(
       namehash('eth'),
-      linearPriceOracleInterfaceId,
-      linearPriceOracle._address
+      linearPremiumPriceOracleInterfaceId,
+      exponential? exponentialPremiumPriceOracle._address : linearPremiumPriceOracle._address
     )
     .send({ from: accounts[0] })
 
@@ -894,6 +914,14 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     web3,
     accounts[0],
     newControllerContract,
+    'threedayspast',
+    (baseDays - 3) * DAYS
+  )
+  nameLogger.record('threedayspast', { label: 'threedayspast', migrated: true })
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
     'released',
     (baseDays - 15) * DAYS
   )
@@ -919,10 +947,22 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     accounts[0],
     newControllerContract,
     'onedaypremium',
-    (baseDays - 27) * DAYS
+    (baseDays - 20) * DAYS
   )
   nameLogger.record('onedaypremium', {
     label: 'onedaypremium',
+    migrated: true,
+  })
+
+  await registerName(
+    web3,
+    accounts[0],
+    newControllerContract,
+    'halfdaypremium',
+    (baseDays - 20.5) * DAYS
+  )
+  nameLogger.record('halfdaypremium', {
+    label: 'halfdaypremium',
     migrated: true,
   })
   nameLogger.record('justreleased', { label: 'justreleased', migrated: true })
@@ -935,23 +975,21 @@ async function deployENS({ web3, accounts, dnssec = false }) {
   )
   console.log({ beforeTime, afterTime })
 
-  const sixcharprice = await linearPriceOracleContract
-    .price('somenonexsitingname122', 0, 12 * 30 * DAYS)
-    .call()
-  const fourcharprice = await linearPriceOracleContract
-    .price('1234', 0, 12 * 30 * DAYS)
-    .call()
-  const threecharprice = await linearPriceOracleContract
-    .price('123', 0, 12 * 30 * DAYS)
-    .call()
-
-  console.log({ sixcharprice, fourcharprice, threecharprice })
   await newEnsContract
     .setSubnodeOwner(namehash('data.eth'), sha3('eth-usd'), accounts[0])
+    .send({ from: accounts[0] })
+  await newEnsContract
+    .setSubnodeOwner(namehash('ens.eth'), sha3('oracle'), accounts[0])
     .send({ from: accounts[0] })
 
   await addNewResolverAndRecords('eth-usd.data.eth')
   await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
+  await addNewResolverAndRecords('oracle.ens.eth')
+  await newResolverContract.setText(
+    namehash('oracle.ens.eth'),
+    'algorithm',
+    exponential ? 'exponential' : 'linear'
+  ).send({from: accounts[0]})
 
   await newEnsContract
     .setResolver(namehash('abittooawesome2.eth'), newResolver._address)
@@ -987,7 +1025,7 @@ async function deployENS({ web3, accounts, dnssec = false }) {
     reverseRegistrarOwnerAddress: accounts[0],
     controllerAddress: newController._address,
     baseRegistrarAddress: newBaseRegistrar._address,
-    linearPriceOracle: linearPriceOracle._address,
+    exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
     offchainResolver: offchainResolver._address
   }
