@@ -8,6 +8,7 @@ import {
   auctionLegacyName,
   loadContract,
   deploy,
+  ZERO_ADDRESS,
 } from './utils'
 import { table } from 'table'
 import { NameLogger } from './namelogger'
@@ -18,7 +19,6 @@ const contenthash =
   '0xe301017012204edd2984eeaf3ddf50bac238ec95c5713fb40b5e428b508fdbe55d3b9f155ffe'
 const content =
   '0x736f6d65436f6e74656e74000000000000000000000000000000000000000000'
-const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 // dnslink based ipns'app.uniswap.org'
 const deprecated_contenthash = '0xe5010170000f6170702e756e69737761702e6f7267'
@@ -98,7 +98,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   /* Deploy the main contracts  */
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
-    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
+    var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS, ZERO_ADDRESS, ZERO_ADDRESS)
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -109,8 +109,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
       web3,
       accounts[0],
       reverseRegistrarJSON,
-      ens._address,
-      resolver._address
+      ens._address
     )
     var testRegistrar = await deploy(
       web3,
@@ -241,10 +240,12 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     oldBaseRegistrar._address,
     priceOracle._address,
     2, // 10 mins in seconds
-    86400 // 24 hours in seconds
+    86400, // 24 hours in seconds
+    ZERO_ADDRESS,
+    ZERO_ADDRESS
   )
 
-  console.log('Successfully setup permanent registrar controller')
+  console.log('Successfully setup permanent registrar controller', controller._address)
   const oldBaseRegistrarContract = oldBaseRegistrar.methods
   const controllerContract = controller.methods
 

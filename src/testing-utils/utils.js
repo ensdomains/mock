@@ -1,7 +1,7 @@
 import util from 'util'
 import moment from 'moment'
 export const DAYS = 24 * 60 * 60
-
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
 export const advanceTime = util.promisify(function (web3, delay, done) {
   return web3.currentProvider.send(
     {
@@ -33,18 +33,46 @@ export const registerName = async function (
   console.log(`Registering ${name}`)
   const secret =
     '0x0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF'
-  const VALUE = duration + 1
   let newnameAvailable = await controllerContract.available(name).call()
+  console.log(`Registering ${name} 1`, {
+    controllerContract:controllerContract.address,
+    name,
+    account,
+    duration,
+    secret,
+    ZERO_ADDRESS
+  })
   var commitment = await controllerContract
-    .makeCommitment(name, account, secret)
+    .makeCommitment(
+      name,
+      account,
+      duration,
+      secret,
+      ZERO_ADDRESS,
+      [],
+      false,
+      0
+      )
     .call()
-  await controllerContract.commit(commitment).send({ from: account })
-  var minCommitmentAge = await controllerContract.minCommitmentAge().call()
+
+  console.log(`Registering ${name} 2`, commitment)
+    await controllerContract.commit(commitment).send({ from: account })
+  console.log(`Registering ${name} 3`)
+    var minCommitmentAge = await controllerContract.minCommitmentAge().call()
   const time = await advanceTime(web3, parseInt(minCommitmentAge))
   await mine(web3)
   const value = await controllerContract.rentPrice(name, duration).call()
   const trx = await controllerContract
-    .register(name, account, duration, secret)
+    .register(
+      name,
+      account,
+      duration,
+      secret,
+      ZERO_ADDRESS,
+      [],
+      false,
+      0
+      )
     .send({ from: account, value: value, gas: 6000000 })
 
   const registeredAt = moment(
@@ -85,7 +113,6 @@ export async function auctionLegacyNameWithoutFinalise(
     .call()
 
   let labelState = await registrarContract.state(labelhash).call()
-
   await registrarContract
     .startAuction(labelhash)
     .send({ from: account, gas: 6000000 })
