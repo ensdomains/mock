@@ -94,6 +94,10 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     'subdomain-registrar',
     'ENSMigrationSubdomainRegistrar'
   )
+
+  const nameWrapperJSON = loadContract('wrapper', 'NameWrapper')
+  const staticMetadataServiceJSON = loadContract('wrapper', 'StaticMetadataService')
+
   console.log('Deploying from account ', accounts[0])
   /* Deploy the main contracts  */
   try {
@@ -129,6 +133,21 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
       namehash('eth'),
       startTime
     )
+
+    var staticMetadataService = await deploy(
+        web3,
+        accounts[0],
+        staticMetadataServiceJSON,
+        'http://localhost:8080/name/0x{id}'
+    )
+    var nameWrapper = await deploy(
+        web3,
+        accounts[0],
+        nameWrapperJSON,
+        ens._address,
+        testRegistrar._address,
+        staticMetadataService._address
+    )
   } catch (e) {
     console.log('deployment failed', e)
   }
@@ -139,6 +158,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   const oldReverseRegistrarContract = oldReverseRegistrar.methods
   const testRegistrarContract = testRegistrar.methods
   const legacyAuctionRegistrarContract = legacyAuctionRegistrar.methods
+  const nameWrapperContract = nameWrapper.methods;
 
   const tld = 'eth'
   const tldHash = sha3(tld)
@@ -315,6 +335,18 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     'data',
     'ens',
   ]
+
+
+  try {
+    await registerName(web3, accounts[0], controllerContract, 'wrappedname');
+    nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
+    const wrappedNameDomain = namehash('wrappedname.eth')
+    await ensContract.setResolver(wrappedNameDomain, resolver._address).send({from: accounts[0]});
+    await resolverContract.setAddr(wrappedNameDomain, accounts[0]).send({from: accounts[0]});
+    await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolver._address);
+  } catch (e) {
+    console.log('Failed to register wrapped name', e)
+  }
 
   console.log('Register name')
   try {
