@@ -1,5 +1,4 @@
 import deployDNSSEC from './deployDNSSEC'
-
 import {
   DAYS,
   advanceTime,
@@ -12,6 +11,7 @@ import {
 import { table } from 'table'
 import { NameLogger } from './namelogger'
 import { interfaces } from '../constants/interfaces'
+import assert from "assert";
 const ROOT_NODE = '0x00000000000000000000000000000000'
 // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
 const contenthash =
@@ -48,6 +48,8 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     }
     return node.toString()
   }
+  const labelhash = (label) => sha3(label)
+
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
@@ -1008,25 +1010,40 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
         web3,
         accounts[0],
         nameWrapperJSON,
-        ens._address,
+        newEns._address,
         newBaseRegistrar._address,
         staticMetadataService._address
     )
+
+    const nameWrapperContract = nameWrapper.methods
+
+    await nameWrapperContract.setController(accounts[0], true).send({from: accounts[0]})
+
     var resolverWithNameWrapper = await deploy(
         web3,
         accounts[0],
         resolverJSON,
-        ens._address,
+        newEns._address,
         nameWrapper._address
     )
-    await registerName(web3, accounts[0], controllerContract, 'wrappedname');
+
+    // Register wrapped name through controller
+    await registerName(web3, accounts[0], newControllerContract, 'wrappedname');
     nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
-    const wrappedNameDomain = namehash('wrappedname.eth')
-    await ensContract.setResolver(wrappedNameDomain, resolverWithNameWrapper._address).send({from: accounts[0]});
-    await resolverWithNameWrapper.methods.setAddr(wrappedNameDomain, accounts[0]).send({from: accounts[0]});
-    const test = await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true).send({from: accounts[0]});
-    console.log('approval', test)
-    await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolverWithNameWrapper._address).send({from: accounts[0]});
+
+    await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true)
+        .send({from: accounts[0]});
+
+    console.log('wrapping wrappedname')
+    await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolverWithNameWrapper._address)
+        .send({from: accounts[0], gas: 6700000})
+
+    console.log('asserting ownership')
+    const wrappedOwner = await nameWrapperContract.ownerOf(
+        namehash('wrappedname.eth')
+    ).call();
+    assert(wrappedOwner === accounts[0], 'wrappedname.eth is owned by accounts[0]');
+
   } catch (e) {
     console.log('Failed to register wrapped name', e)
   }
