@@ -991,7 +991,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   await newBaseRegistrarContract.setResolver(ownedResolver._address).send({from: accounts[0]})
   console.log(2)
   console.log(await newEnsContract.resolver(namehash('eth')).call())
-  await newResolverContract.setText(
+  await ownedResolverContract.setText(
     namehash('eth'),
     'oracle',
     exponential ? 'exponential' : 'linear'
