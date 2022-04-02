@@ -51,6 +51,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
+  const ownedResolverJSON = loadContract('resolvers', 'OwnedResolver')
   const offchainresolverpath = `${process.env.PWD}/node_modules/@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/OffchainResolver.json`
   const offchainResolverJSON = require(offchainresolverpath)
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
@@ -101,6 +102,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
+    var ownedResolver = await deploy(web3, accounts[0], ownedResolverJSON, ens._address, ZERO_ADDRESS)
     var GATEWAY_HOST = 'http://localhost:8080'
     // demo url
     // var GATEWAY_HOST = 'https://offchain-resolver-example.uc.r.appspot.com'
@@ -149,6 +151,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   const ensContract = ens.methods
   const resolverContract = resolver.methods
+  const ownedResolverContract = ownedResolver.methods
   const oldResolverContract = oldResolver.methods
   const oldReverseRegistrarContract = oldReverseRegistrar.methods
   const testRegistrarContract = testRegistrar.methods
@@ -984,10 +987,13 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   await addNewResolverAndRecords('eth-usd.data.eth')
   await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
-  await addNewResolverAndRecords('oracle.ens.eth')
+  console.log(1)
+  await newBaseRegistrarContract.setResolver(ownedResolver._address).send({from: accounts[0]})
+  console.log(2)
+  console.log(await newEnsContract.resolver(namehash('eth')).call())
   await newResolverContract.setText(
-    namehash('oracle.ens.eth'),
-    'algorithm',
+    namehash('eth'),
+    'oracle',
     exponential ? 'exponential' : 'linear'
   ).send({from: accounts[0]})
 
