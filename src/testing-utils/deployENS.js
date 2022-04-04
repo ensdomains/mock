@@ -652,20 +652,17 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
     .send({ from: accounts[0] })
   await newEnsContract
-    .setResolver(namehash('eth'), newResolver._address)
+    .setResolver(namehash('eth'), ownedResolver._address)
     .send({ from: accounts[0], gas: 6000000 })
-  await newResolverContract
-    .setApprovalForAll(newController._address, true)
-    .send({ from: accounts[0] })
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       permanentRegistrarInterfaceId,
       newController._address
     )
     .send({ from: accounts[0] })
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       permanentRegistrarWithConfigInterfaceId,
@@ -675,7 +672,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   // We still need to know what legacyAuctionRegistrar is to check who can release deed.
   if(!dnssec){
-    await newResolverContract
+    await ownedResolverContract
     .setInterface(
       namehash('eth'),
       legacyRegistrarInterfaceId,
@@ -684,7 +681,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   }
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       bulkRenewalInterfaceId,
@@ -692,7 +689,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     )
     .send({ from: accounts[0] })
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       linearPremiumPriceOracleInterfaceId,
@@ -972,7 +969,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   await addNewResolverAndRecords('eth-usd.data.eth')
   await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
-  await newBaseRegistrarContract.setResolver(ownedResolver._address).send({from: accounts[0]})
   await ownedResolverContract.setText(
     namehash('eth'),
     'oracle',
