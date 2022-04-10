@@ -51,6 +51,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
+  const ownedResolverJSON = loadContract('resolvers', 'OwnedResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('registry', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
@@ -99,6 +100,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
+    var ownedResolver = await deploy(web3, accounts[0], ownedResolverJSON, ens._address, ZERO_ADDRESS)
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -135,6 +137,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   const ensContract = ens.methods
   const resolverContract = resolver.methods
+  const ownedResolverContract = ownedResolver.methods
   const oldResolverContract = oldResolver.methods
   const oldReverseRegistrarContract = oldReverseRegistrar.methods
   const testRegistrarContract = testRegistrar.methods
@@ -649,20 +652,17 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
     .send({ from: accounts[0] })
   await newEnsContract
-    .setResolver(namehash('eth'), newResolver._address)
+    .setResolver(namehash('eth'), ownedResolver._address)
     .send({ from: accounts[0], gas: 6000000 })
-  await newResolverContract
-    .setApprovalForAll(newController._address, true)
-    .send({ from: accounts[0] })
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       permanentRegistrarInterfaceId,
       newController._address
     )
     .send({ from: accounts[0] })
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       permanentRegistrarWithConfigInterfaceId,
@@ -672,7 +672,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   // We still need to know what legacyAuctionRegistrar is to check who can release deed.
   if(!dnssec){
-    await newResolverContract
+    await ownedResolverContract
     .setInterface(
       namehash('eth'),
       legacyRegistrarInterfaceId,
@@ -681,7 +681,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   }
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       bulkRenewalInterfaceId,
@@ -689,7 +689,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     )
     .send({ from: accounts[0] })
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       linearPremiumPriceOracleInterfaceId,
@@ -969,10 +969,9 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   await addNewResolverAndRecords('eth-usd.data.eth')
   await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
-  await addNewResolverAndRecords('oracle.ens.eth')
-  await newResolverContract.setText(
-    namehash('oracle.ens.eth'),
-    'algorithm',
+  await ownedResolverContract.setText(
+    namehash('eth'),
+    'oracle',
     exponential ? 'exponential' : 'linear'
   ).send({from: accounts[0]})
 
