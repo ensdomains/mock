@@ -12,6 +12,7 @@ import { table } from 'table'
 import { NameLogger } from './namelogger'
 import { interfaces } from '../constants/interfaces'
 import assert from "assert";
+import packet from "dns-packet";
 const ROOT_NODE = '0x00000000000000000000000000000000'
 // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
 const contenthash =
@@ -49,6 +50,10 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     return node.toString()
   }
   const labelhash = (label) => sha3(label)
+
+  function encodeName(name) {
+    return '0x' + packet.name.encode(name).toString('hex')
+  }
 
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
@@ -1027,13 +1032,53 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
         nameWrapper._address
     )
 
-    // Register wrapped name through controller
+    console.log('setting namewrapper approval for registrar and registry');
+    await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true)
+    .send({from: accounts[0]});
+
+    await newEnsContract.setApprovalForAll(nameWrapper._address, true)
+    .send({from: accounts[0]})
+
+    /** 
+     * @name wrappedname.eth
+     * @desc mock data for a properly wrapped domain 
+     */
     await registerName(web3, accounts[0], newControllerContract, 'wrappedname');
     nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
+    assert((await newEnsContract.owner(namehash('wrappedname.eth')).call()) === accounts[0], 'check owner of wrappedname.eth');
 
-    await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true)
-        .send({from: accounts[0]});
+    /** 
+    * @name subdomain.wrappedname.eth
+    * @desc mock data for a properly wrapped subdomain
+   */
+     console.log('registering subdomain.wrappedname.eth');
+     await newEnsContract
+         .setSubnodeOwner(namehash('wrappedname.eth'), sha3('subdomain'), accounts[0])
+         .send({ from: accounts[0], gas: 6700000 })
+     nameLogger.record('subdomain.wrappedname.eth', {label: 'subdomain.wrappedname.eth'})
+     assert((await newEnsContract.owner(namehash('subdomain.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
 
+    /**
+         * @name unwrapped.wrappedname.eth
+         * @desc mock data for a subdomain that is not wrapped while the parent domain is.
+         */
+      console.log('register unwrapped.wrapped.eth');
+      await newEnsContract
+      .setSubnodeOwner(namehash('wrappedname.eth'), sha3('unwrapped'), accounts[0])
+      .send({ from: accounts[0] })
+      nameLogger.record('unwrapped.wrappedname.eth', {label: 'unwrapped.wrappedname.eth'})
+      assert((await newEnsContract.owner(namehash('unwrapped.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
+
+       /**
+     * @name expiredwrappedname.eth
+     * @desc mock data for a domain that was wrapped but expired and repurchased
+     */
+    const expiredDomainDurationDays = 60
+     await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname', expiredDomainDurationDays * DAYS);
+     nameLogger.record('expiredwrappedname.eth', {label: 'expiredwrappedname'});
+     assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
+
+     // Setting up wrappedname.eth
     console.log('wrapping wrappedname')
     await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolverWithNameWrapper._address)
         .send({from: accounts[0], gas: 6700000})
@@ -1043,6 +1088,45 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
         namehash('wrappedname.eth')
     ).call();
     assert(wrappedOwner === accounts[0], 'wrappedname.eth is owned by accounts[0]');
+
+    assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
+
+    // Setting up subdomain.wrappedname.eth
+    console.log('wrapping subdomain.wrappedname')
+    await nameWrapperContract.wrap(
+        encodeName('subdomain.wrappedname.eth'),
+        accounts[0],
+        0,
+        resolverWithNameWrapper._address
+    ).send({from: accounts[0], gas: 6700000})
+
+    console.log('asserting owenership of subdomain.wrappendname.eth');
+    const wrappedSubOnwer = await nameWrapperContract.ownerOf(
+        namehash('subdomain.wrappedname.eth')
+    ).call()
+    assert(wrappedSubOnwer === accounts[0], 'subdomain.wrappedname.eth is owned by accounts[0]')
+
+      
+    // Setting up expiredwrappedname.eth
+     console.log('wrapping expiredwrappedname')
+     await nameWrapperContract.wrapETH2LD('expiredwrappedname', accounts[0], 0, resolverWithNameWrapper._address)
+         .send({from: accounts[0], gas: 6700000})
+ 
+    await advanceTime(web3, (6 * 31 + expiredDomainDurationDays) * DAYS);
+    await mine(web3);
+
+    assert(await newControllerContract.available('expiredwrappedname').call() === true, 'expiredwrappedname is available');
+    await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname');
+
+     console.log('asserting ownership')
+     const expiredWrappedDomainOwner = await newEnsContract.owner(namehash('expiredwrappedname.eth')).call();
+     assert(expiredWrappedDomainOwner === accounts[0], 'expiredwrappedname.eth is ownned by accounts[0]')
+
+     console.log('asserting namewrapper ownership');
+     const expiredwrappedOwner = await nameWrapperContract.ownerOf(
+         namehash('expiredwrappedname.eth')
+     ).call();
+     assert(expiredwrappedOwner === accounts[0], 'expiredwrappedname.eth name wrapper is owned by accounts[0]');
 
   } catch (e) {
     console.log('Failed to register wrapped name', e)
@@ -1069,6 +1153,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
+    nameWrapperAddress: nameWrapper._address
   }
   let config = {
     columns: {
