@@ -1043,7 +1043,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
      * @name wrappedname.eth
      * @desc mock data for a properly wrapped domain 
      */
-    await registerName(web3, accounts[0], newControllerContract, 'wrappedname');
+    await registerName(web3, accounts[0], newControllerContract, 'wrappedname', 365 * 2 * DAYS);
     nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
     assert((await newEnsContract.owner(namehash('wrappedname.eth')).call()) === accounts[0], 'check owner of wrappedname.eth');
 
@@ -1112,21 +1112,21 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
      await nameWrapperContract.wrapETH2LD('expiredwrappedname', accounts[0], 0, resolverWithNameWrapper._address)
          .send({from: accounts[0], gas: 6700000})
  
-    await advanceTime(web3, (6 * 31 + expiredDomainDurationDays) * DAYS);
-    await mine(web3);
+    // await advanceTime(web3, (6 * 31 + expiredDomainDurationDays) * DAYS);
+    // await mine(web3);
 
-    assert(await newControllerContract.available('expiredwrappedname').call() === true, 'expiredwrappedname is available');
-    await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname');
+    // assert(await newControllerContract.available('expiredwrappedname').call() === true, 'expiredwrappedname is available');
+    // await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname');
 
-     console.log('asserting ownership')
-     const expiredWrappedDomainOwner = await newEnsContract.owner(namehash('expiredwrappedname.eth')).call();
-     assert(expiredWrappedDomainOwner === accounts[0], 'expiredwrappedname.eth is ownned by accounts[0]')
+    //  console.log('asserting ownership')
+    //  const expiredWrappedDomainOwner = await newEnsContract.owner(namehash('expiredwrappedname.eth')).call();
+    //  assert(expiredWrappedDomainOwner === accounts[0], 'expiredwrappedname.eth is ownned by accounts[0]')
 
-     console.log('asserting namewrapper ownership');
-     const expiredwrappedOwner = await nameWrapperContract.ownerOf(
-         namehash('expiredwrappedname.eth')
-     ).call();
-     assert(expiredwrappedOwner === accounts[0], 'expiredwrappedname.eth name wrapper is owned by accounts[0]');
+    //  console.log('asserting namewrapper ownership');
+    //  const expiredwrappedOwner = await nameWrapperContract.ownerOf(
+    //      namehash('expiredwrappedname.eth')
+    //  ).call();
+    //  assert(expiredwrappedOwner === accounts[0], 'expiredwrappedname.eth name wrapper is owned by accounts[0]');
 
   } catch (e) {
     console.log('Failed to register wrapped name', e)
