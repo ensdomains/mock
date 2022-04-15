@@ -1004,113 +1004,113 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
 
   // Name wrapper
-  try {
-    var staticMetadataService = await deploy(
-        web3,
-        accounts[0],
-        staticMetadataServiceJSON,
-        'http://localhost:8080/name/0x{id}'
-    )
-    var nameWrapper = await deploy(
-        web3,
-        accounts[0],
-        nameWrapperJSON,
-        newEns._address,
-        newBaseRegistrar._address,
-        staticMetadataService._address
-    )
+  // try {
+  //   var staticMetadataService = await deploy(
+  //       web3,
+  //       accounts[0],
+  //       staticMetadataServiceJSON,
+  //       'http://localhost:8080/name/0x{id}'
+  //   )
+  //   var nameWrapper = await deploy(
+  //       web3,
+  //       accounts[0],
+  //       nameWrapperJSON,
+  //       newEns._address,
+  //       newBaseRegistrar._address,
+  //       staticMetadataService._address
+  //   )
 
-    const nameWrapperContract = nameWrapper.methods
+  //   const nameWrapperContract = nameWrapper.methods
 
-    await nameWrapperContract.setController(accounts[0], true).send({from: accounts[0]})
+  //   await nameWrapperContract.setController(accounts[0], true).send({from: accounts[0]})
 
-    var resolverWithNameWrapper = await deploy(
-        web3,
-        accounts[0],
-        resolverJSON,
-        newEns._address,
-        nameWrapper._address
-    )
+  //   var resolverWithNameWrapper = await deploy(
+  //       web3,
+  //       accounts[0],
+  //       resolverJSON,
+  //       newEns._address,
+  //       nameWrapper._address
+  //   )
 
-    console.log('setting namewrapper approval for registrar and registry');
-    await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true)
-    .send({from: accounts[0]});
+  //   console.log('setting namewrapper approval for registrar and registry');
+  //   await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true)
+  //   .send({from: accounts[0]});
 
-    await newEnsContract.setApprovalForAll(nameWrapper._address, true)
-    .send({from: accounts[0]})
+  //   await newEnsContract.setApprovalForAll(nameWrapper._address, true)
+  //   .send({from: accounts[0]})
 
-    /** 
-     * @name wrappedname.eth
-     * @desc mock data for a properly wrapped domain 
-     */
-    await registerName(web3, accounts[0], newControllerContract, 'wrappedname', 365 * 2 * DAYS);
-    nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
-    assert((await newEnsContract.owner(namehash('wrappedname.eth')).call()) === accounts[0], 'check owner of wrappedname.eth');
+  //   /** 
+  //    * @name wrappedname.eth
+  //    * @desc mock data for a properly wrapped domain 
+  //    */
+  //   await registerName(web3, accounts[0], newControllerContract, 'wrappedname', 365 * 2 * DAYS);
+  //   nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
+  //   assert((await newEnsContract.owner(namehash('wrappedname.eth')).call()) === accounts[0], 'check owner of wrappedname.eth');
 
-    /** 
-    * @name subdomain.wrappedname.eth
-    * @desc mock data for a properly wrapped subdomain
-   */
-     console.log('registering subdomain.wrappedname.eth');
-     await newEnsContract
-         .setSubnodeOwner(namehash('wrappedname.eth'), sha3('subdomain'), accounts[0])
-         .send({ from: accounts[0], gas: 6700000 })
-     nameLogger.record('subdomain.wrappedname.eth', {label: 'subdomain.wrappedname.eth'})
-     assert((await newEnsContract.owner(namehash('subdomain.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
+  //   /** 
+  //   * @name subdomain.wrappedname.eth
+  //   * @desc mock data for a properly wrapped subdomain
+  //  */
+  //    console.log('registering subdomain.wrappedname.eth');
+  //    await newEnsContract
+  //        .setSubnodeOwner(namehash('wrappedname.eth'), sha3('subdomain'), accounts[0])
+  //        .send({ from: accounts[0], gas: 6700000 })
+  //    nameLogger.record('subdomain.wrappedname.eth', {label: 'subdomain.wrappedname.eth'})
+  //    assert((await newEnsContract.owner(namehash('subdomain.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
 
-    /**
-         * @name unwrapped.wrappedname.eth
-         * @desc mock data for a subdomain that is not wrapped while the parent domain is.
-         */
-      console.log('register unwrapped.wrapped.eth');
-      await newEnsContract
-      .setSubnodeOwner(namehash('wrappedname.eth'), sha3('unwrapped'), accounts[0])
-      .send({ from: accounts[0] })
-      nameLogger.record('unwrapped.wrappedname.eth', {label: 'unwrapped.wrappedname.eth'})
-      assert((await newEnsContract.owner(namehash('unwrapped.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
+  //   /**
+  //        * @name unwrapped.wrappedname.eth
+  //        * @desc mock data for a subdomain that is not wrapped while the parent domain is.
+  //        */
+  //     console.log('register unwrapped.wrapped.eth');
+  //     await newEnsContract
+  //     .setSubnodeOwner(namehash('wrappedname.eth'), sha3('unwrapped'), accounts[0])
+  //     .send({ from: accounts[0] })
+  //     nameLogger.record('unwrapped.wrappedname.eth', {label: 'unwrapped.wrappedname.eth'})
+  //     assert((await newEnsContract.owner(namehash('unwrapped.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
 
-       /**
-     * @name expiredwrappedname.eth
-     * @desc mock data for a domain that was wrapped but expired and repurchased
-     */
-    const expiredDomainDurationDays = 60
-     await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname', expiredDomainDurationDays * DAYS);
-     nameLogger.record('expiredwrappedname.eth', {label: 'expiredwrappedname'});
-     assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
+  //      /**
+  //    * @name expiredwrappedname.eth
+  //    * @desc mock data for a domain that was wrapped but expired and repurchased
+  //    */
+  //   const expiredDomainDurationDays = 60
+  //    await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname', expiredDomainDurationDays * DAYS);
+  //    nameLogger.record('expiredwrappedname.eth', {label: 'expiredwrappedname'});
+  //    assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
 
-     // Setting up wrappedname.eth
-    console.log('wrapping wrappedname')
-    await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolverWithNameWrapper._address)
-        .send({from: accounts[0], gas: 6700000})
+  //    // Setting up wrappedname.eth
+  //   console.log('wrapping wrappedname')
+  //   await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolverWithNameWrapper._address)
+  //       .send({from: accounts[0], gas: 6700000})
 
-    console.log('asserting ownership')
-    const wrappedOwner = await nameWrapperContract.ownerOf(
-        namehash('wrappedname.eth')
-    ).call();
-    assert(wrappedOwner === accounts[0], 'wrappedname.eth is owned by accounts[0]');
+  //   console.log('asserting ownership')
+  //   const wrappedOwner = await nameWrapperContract.ownerOf(
+  //       namehash('wrappedname.eth')
+  //   ).call();
+  //   assert(wrappedOwner === accounts[0], 'wrappedname.eth is owned by accounts[0]');
 
-    assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
+  //   assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
 
-    // Setting up subdomain.wrappedname.eth
-    console.log('wrapping subdomain.wrappedname')
-    await nameWrapperContract.wrap(
-        encodeName('subdomain.wrappedname.eth'),
-        accounts[0],
-        0,
-        resolverWithNameWrapper._address
-    ).send({from: accounts[0], gas: 6700000})
+  //   // Setting up subdomain.wrappedname.eth
+  //   console.log('wrapping subdomain.wrappedname')
+  //   await nameWrapperContract.wrap(
+  //       encodeName('subdomain.wrappedname.eth'),
+  //       accounts[0],
+  //       0,
+  //       resolverWithNameWrapper._address
+  //   ).send({from: accounts[0], gas: 6700000})
 
-    console.log('asserting owenership of subdomain.wrappendname.eth');
-    const wrappedSubOnwer = await nameWrapperContract.ownerOf(
-        namehash('subdomain.wrappedname.eth')
-    ).call()
-    assert(wrappedSubOnwer === accounts[0], 'subdomain.wrappedname.eth is owned by accounts[0]')
+  //   console.log('asserting owenership of subdomain.wrappendname.eth');
+  //   const wrappedSubOnwer = await nameWrapperContract.ownerOf(
+  //       namehash('subdomain.wrappedname.eth')
+  //   ).call()
+  //   assert(wrappedSubOnwer === accounts[0], 'subdomain.wrappedname.eth is owned by accounts[0]')
 
       
-    // Setting up expiredwrappedname.eth
-     console.log('wrapping expiredwrappedname')
-     await nameWrapperContract.wrapETH2LD('expiredwrappedname', accounts[0], 0, resolverWithNameWrapper._address)
-         .send({from: accounts[0], gas: 6700000})
+  //   // Setting up expiredwrappedname.eth
+  //    console.log('wrapping expiredwrappedname')
+  //    await nameWrapperContract.wrapETH2LD('expiredwrappedname', accounts[0], 0, resolverWithNameWrapper._address)
+  //        .send({from: accounts[0], gas: 6700000})
  
     // await advanceTime(web3, (6 * 31 + expiredDomainDurationDays) * DAYS);
     // await mine(web3);
