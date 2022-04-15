@@ -1128,9 +1128,9 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     //  ).call();
     //  assert(expiredwrappedOwner === accounts[0], 'expiredwrappedname.eth name wrapper is owned by accounts[0]');
 
-  } catch (e) {
-    console.log('Failed to register wrapped name', e)
-  }
+  // } catch (e) {
+  //   console.log('Failed to register wrapped name', e)
+  // }
 
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
@@ -1153,7 +1153,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
-    nameWrapperAddress: nameWrapper._address
+    // nameWrapperAddress: nameWrapper._address
   }
   let config = {
     columns: {
