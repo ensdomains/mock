@@ -8,7 +8,7 @@ import {
 } from './utils'
 import packet from "dns-packet";
 
-async function deployNM({ 
+async function deployNameWrapper({ 
     web3, 
     accounts, 
     newEns, 
@@ -180,4 +180,4 @@ async function deployNM({
     process.exit()
   }
 }
-export default deployNM
+export default deployNameWrapper
