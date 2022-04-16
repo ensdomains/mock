@@ -1,4 +1,5 @@
 import deployDNSSEC from './deployDNSSEC'
+
 import {
   DAYS,
   advanceTime,
@@ -11,8 +12,6 @@ import {
 import { table } from 'table'
 import { NameLogger } from './namelogger'
 import { interfaces } from '../constants/interfaces'
-import packet from "dns-packet";
-import deployNameWrapper from './deployNameWrapper'
 const ROOT_NODE = '0x00000000000000000000000000000000'
 // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
 const contenthash =
@@ -49,15 +48,10 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     }
     return node.toString()
   }
-  const labelhash = (label) => sha3(label)
-
-  function encodeName(name) {
-    return '0x' + packet.name.encode(name).toString('hex')
-  }
-
   const nameLogger = new NameLogger({ sha3, namehash })
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
+  const ownedResolverJSON = loadContract('resolvers', 'OwnedResolver')
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('registry', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
@@ -101,15 +95,12 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     'subdomain-registrar',
     'ENSMigrationSubdomainRegistrar'
   )
-
-  // const nameWrapperJSON = loadContract('wrapper', 'NameWrapper')
-  // const staticMetadataServiceJSON = loadContract('wrapper', 'StaticMetadataService')
-
   console.log('Deploying from account ', accounts[0])
   /* Deploy the main contracts  */
   try {
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
+    var ownedResolver = await deploy(web3, accounts[0], ownedResolverJSON, ens._address, ZERO_ADDRESS)
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -140,14 +131,13 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
       namehash('eth'),
       startTime
     )
-
-
   } catch (e) {
     console.log('deployment failed', e)
   }
 
   const ensContract = ens.methods
   const resolverContract = resolver.methods
+  const ownedResolverContract = ownedResolver.methods
   const oldResolverContract = oldResolver.methods
   const oldReverseRegistrarContract = oldReverseRegistrar.methods
   const testRegistrarContract = testRegistrar.methods
@@ -328,9 +318,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     'data',
     'ens',
   ]
-
-
-
 
   console.log('Register name')
   try {
@@ -665,20 +652,17 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
     .send({ from: accounts[0] })
   await newEnsContract
-    .setResolver(namehash('eth'), newResolver._address)
+    .setResolver(namehash('eth'), ownedResolver._address)
     .send({ from: accounts[0], gas: 6000000 })
-  await newResolverContract
-    .setApprovalForAll(newController._address, true)
-    .send({ from: accounts[0] })
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       permanentRegistrarInterfaceId,
       newController._address
     )
     .send({ from: accounts[0] })
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       permanentRegistrarWithConfigInterfaceId,
@@ -688,7 +672,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   // We still need to know what legacyAuctionRegistrar is to check who can release deed.
   if(!dnssec){
-    await newResolverContract
+    await ownedResolverContract
     .setInterface(
       namehash('eth'),
       legacyRegistrarInterfaceId,
@@ -697,7 +681,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   }
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       bulkRenewalInterfaceId,
@@ -705,7 +689,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     )
     .send({ from: accounts[0] })
 
-  await newResolverContract
+  await ownedResolverContract
     .setInterface(
       namehash('eth'),
       linearPremiumPriceOracleInterfaceId,
@@ -900,26 +884,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   nameLogger.record('example.test', { label: 'example', migrated: true })
 
-
-  // console.log(nameLogger)
-  // [web3, accounts, newEns, newEnsContract, newBaseRegistrar,
-  //   newBaseRegistrarContract,
-  //   newControllerContract,
-  //   nameLogger].forEach((element, i) => {
-  //     if (element) console.log(i, 'exists')
-  //     else console.log(i, 'does not exist')
-  //   });
-  const {nameWrapperAddress} = await deployNameWrapper({
-    web3,
-    accounts,
-    newEns,
-    newEnsContract,
-    newBaseRegistrar,
-    newBaseRegistrarContract,
-    newControllerContract,
-    nameLogger
-  })
-
   const baseDays = 60
   const beforeTime = new Date(
     (await web3.eth.getBlock('latest')).timestamp * 1000
@@ -1005,10 +969,9 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
   await addNewResolverAndRecords('eth-usd.data.eth')
   await newResolverContract.setAddr(namehash('eth-usd.data.eth'), dummyOracle._address).send({from: accounts[0]})
-  await addNewResolverAndRecords('oracle.ens.eth')
-  await newResolverContract.setText(
-    namehash('oracle.ens.eth'),
-    'algorithm',
+  await ownedResolverContract.setText(
+    namehash('eth'),
+    'oracle',
     exponential ? 'exponential' : 'linear'
   ).send({from: accounts[0]})
 
@@ -1022,135 +985,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
 
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
-
-  // Name wrapper
-  // try {
-  //   var staticMetadataService = await deploy(
-  //       web3,
-  //       accounts[0],
-  //       staticMetadataServiceJSON,
-  //       'http://localhost:8080/name/0x{id}'
-  //   )
-  //   var nameWrapper = await deploy(
-  //       web3,
-  //       accounts[0],
-  //       nameWrapperJSON,
-  //       newEns._address,
-  //       newBaseRegistrar._address,
-  //       staticMetadataService._address
-  //   )
-
-  //   const nameWrapperContract = nameWrapper.methods
-
-  //   await nameWrapperContract.setController(accounts[0], true).send({from: accounts[0]})
-
-  //   var resolverWithNameWrapper = await deploy(
-  //       web3,
-  //       accounts[0],
-  //       resolverJSON,
-  //       newEns._address,
-  //       nameWrapper._address
-  //   )
-
-  //   console.log('setting namewrapper approval for registrar and registry');
-  //   await newBaseRegistrarContract.setApprovalForAll(nameWrapper._address, true)
-  //   .send({from: accounts[0]});
-
-  //   await newEnsContract.setApprovalForAll(nameWrapper._address, true)
-  //   .send({from: accounts[0]})
-
-  //   /** 
-  //    * @name wrappedname.eth
-  //    * @desc mock data for a properly wrapped domain 
-  //    */
-  //   await registerName(web3, accounts[0], newControllerContract, 'wrappedname', 365 * 2 * DAYS);
-  //   nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
-  //   assert((await newEnsContract.owner(namehash('wrappedname.eth')).call()) === accounts[0], 'check owner of wrappedname.eth');
-
-  //   /** 
-  //   * @name subdomain.wrappedname.eth
-  //   * @desc mock data for a properly wrapped subdomain
-  //  */
-  //    console.log('registering subdomain.wrappedname.eth');
-  //    await newEnsContract
-  //        .setSubnodeOwner(namehash('wrappedname.eth'), sha3('subdomain'), accounts[0])
-  //        .send({ from: accounts[0], gas: 6700000 })
-  //    nameLogger.record('subdomain.wrappedname.eth', {label: 'subdomain.wrappedname.eth'})
-  //    assert((await newEnsContract.owner(namehash('subdomain.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
-
-  //   /**
-  //        * @name unwrapped.wrappedname.eth
-  //        * @desc mock data for a subdomain that is not wrapped while the parent domain is.
-  //        */
-  //     console.log('register unwrapped.wrapped.eth');
-  //     await newEnsContract
-  //     .setSubnodeOwner(namehash('wrappedname.eth'), sha3('unwrapped'), accounts[0])
-  //     .send({ from: accounts[0] })
-  //     nameLogger.record('unwrapped.wrappedname.eth', {label: 'unwrapped.wrappedname.eth'})
-  //     assert((await newEnsContract.owner(namehash('unwrapped.wrappedname.eth')).call()) === accounts[0], 'check owner of subdomain')
-
-  //      /**
-  //    * @name expiredwrappedname.eth
-  //    * @desc mock data for a domain that was wrapped but expired and repurchased
-  //    */
-  //   const expiredDomainDurationDays = 60
-  //    await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname', expiredDomainDurationDays * DAYS);
-  //    nameLogger.record('expiredwrappedname.eth', {label: 'expiredwrappedname'});
-  //    assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
-
-  //    // Setting up wrappedname.eth
-  //   console.log('wrapping wrappedname')
-  //   await nameWrapperContract.wrapETH2LD('wrappedname', accounts[0], 0, resolverWithNameWrapper._address)
-  //       .send({from: accounts[0], gas: 6700000})
-
-  //   console.log('asserting ownership')
-  //   const wrappedOwner = await nameWrapperContract.ownerOf(
-  //       namehash('wrappedname.eth')
-  //   ).call();
-  //   assert(wrappedOwner === accounts[0], 'wrappedname.eth is owned by accounts[0]');
-
-  //   assert((await newEnsContract.owner(namehash('expiredwrappedname.eth')).call()) === accounts[0], 'check owner of expiredwrappedname.eth');
-
-  //   // Setting up subdomain.wrappedname.eth
-  //   console.log('wrapping subdomain.wrappedname')
-  //   await nameWrapperContract.wrap(
-  //       encodeName('subdomain.wrappedname.eth'),
-  //       accounts[0],
-  //       0,
-  //       resolverWithNameWrapper._address
-  //   ).send({from: accounts[0], gas: 6700000})
-
-  //   console.log('asserting owenership of subdomain.wrappendname.eth');
-  //   const wrappedSubOnwer = await nameWrapperContract.ownerOf(
-  //       namehash('subdomain.wrappedname.eth')
-  //   ).call()
-  //   assert(wrappedSubOnwer === accounts[0], 'subdomain.wrappedname.eth is owned by accounts[0]')
-
-      
-  //   // Setting up expiredwrappedname.eth
-  //    console.log('wrapping expiredwrappedname')
-  //    await nameWrapperContract.wrapETH2LD('expiredwrappedname', accounts[0], 0, resolverWithNameWrapper._address)
-  //        .send({from: accounts[0], gas: 6700000})
- 
-    // await advanceTime(web3, (6 * 31 + expiredDomainDurationDays) * DAYS);
-    // await mine(web3);
-
-    // assert(await newControllerContract.available('expiredwrappedname').call() === true, 'expiredwrappedname is available');
-    // await registerName(web3, accounts[0], newControllerContract, 'expiredwrappedname');
-
-    //  console.log('asserting ownership')
-    //  const expiredWrappedDomainOwner = await newEnsContract.owner(namehash('expiredwrappedname.eth')).call();
-    //  assert(expiredWrappedDomainOwner === accounts[0], 'expiredwrappedname.eth is ownned by accounts[0]')
-
-    //  console.log('asserting namewrapper ownership');
-    //  const expiredwrappedOwner = await nameWrapperContract.ownerOf(
-    //      namehash('expiredwrappedname.eth')
-    //  ).call();
-    //  assert(expiredwrappedOwner === accounts[0], 'expiredwrappedname.eth name wrapper is owned by accounts[0]');
-
-  // } catch (e) {
-  //   console.log('Failed to register wrapped name', e)
-  // }
 
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
@@ -1173,7 +1007,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
-    nameWrapperAddress
   }
   let config = {
     columns: {
