@@ -650,16 +650,16 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     await deployDNSSEC(web3, accounts, newEns, newResolver)
   }
 
-  const {nameWrapperAddress} = await deployNameWrapper({
-    web3,
-    accounts,
-    newEns,
-    newEnsContract,
-    newBaseRegistrar,
-    newBaseRegistrarContract,
-    newControllerContract,
-    nameLogger
-  })
+  // const {nameWrapperAddress} = await deployNameWrapper({
+  //   web3,
+  //   accounts,
+  //   newEns,
+  //   newEnsContract,
+  //   newBaseRegistrar,
+  //   newBaseRegistrarContract,
+  //   newControllerContract,
+  //   nameLogger
+  // })
 
 
   await newEnsContract
