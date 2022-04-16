@@ -18,27 +18,29 @@ async function deployNameWrapper({
     newControllerContract,
     nameLogger
 }) {
-
-    const { sha3 } = web3.utils
-    function namehash(name) {
-        let node =
-            '0x0000000000000000000000000000000000000000000000000000000000000000'
-        if (name !== '') {
-            let labels = name.split('.')
-            for (let i = labels.length - 1; i >= 0; i--) {
-                node = sha3(node + sha3(labels[i]).slice(2), {
-                    encoding: 'hex',
-                })
-            }
-        }
-        return node.toString()
-    }
-
-    function encodeName(name) {
-        return '0x' + packet.name.encode(name).toString('hex')
-      }
-
     try {
+
+        console.log('starting')
+        const { sha3 } = web3.utils
+        console.log('got dat sha');
+        function namehash(name) {
+            let node =
+                '0x0000000000000000000000000000000000000000000000000000000000000000'
+            if (name !== '') {
+                let labels = name.split('.')
+                for (let i = labels.length - 1; i >= 0; i--) {
+                    node = sha3(node + sha3(labels[i]).slice(2), {
+                        encoding: 'hex',
+                    })
+                }
+            }
+            return node.toString()
+        }
+
+        function encodeName(name) {
+            return '0x' + packet.name.encode(name).toString('hex')
+        }
+
 
         const staticMetadataServiceJSON = loadContract('wrapper', 'StaticMetadataService')
         var staticMetadataService = await deploy(
