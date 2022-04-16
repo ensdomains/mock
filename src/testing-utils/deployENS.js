@@ -12,7 +12,7 @@ import {
 import { table } from 'table'
 import { NameLogger } from './namelogger'
 import { interfaces } from '../constants/interfaces'
-import deployNameWrapper from './deployNameWrapper'
+// import deployNameWrapper from './deployNameWrapper'
 const ROOT_NODE = '0x00000000000000000000000000000000'
 // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
 const contenthash =
@@ -1021,7 +1021,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
-    nameWrapperAddress
+    nameWrapperAddress: undefined
   }
   let config = {
     columns: {
