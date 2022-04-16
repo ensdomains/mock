@@ -11,8 +11,8 @@ import {
 import { table } from 'table'
 import { NameLogger } from './namelogger'
 import { interfaces } from '../constants/interfaces'
-import assert from "assert";
 import packet from "dns-packet";
+import deployNameWrapper from './deployNameWrapper'
 const ROOT_NODE = '0x00000000000000000000000000000000'
 // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
 const contenthash =
@@ -102,8 +102,8 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     'ENSMigrationSubdomainRegistrar'
   )
 
-  const nameWrapperJSON = loadContract('wrapper', 'NameWrapper')
-  const staticMetadataServiceJSON = loadContract('wrapper', 'StaticMetadataService')
+  // const nameWrapperJSON = loadContract('wrapper', 'NameWrapper')
+  // const staticMetadataServiceJSON = loadContract('wrapper', 'StaticMetadataService')
 
   console.log('Deploying from account ', accounts[0])
   /* Deploy the main contracts  */
@@ -900,6 +900,26 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   nameLogger.record('example.test', { label: 'example', migrated: true })
 
+
+  // console.log(nameLogger)
+  // [web3, accounts, newEns, newEnsContract, newBaseRegistrar,
+  //   newBaseRegistrarContract,
+  //   newControllerContract,
+  //   nameLogger].forEach((element, i) => {
+  //     if (element) console.log(i, 'exists')
+  //     else console.log(i, 'does not exist')
+  //   });
+  const {nameWrapperAddress} = await deployNameWrapper({
+    web3,
+    accounts,
+    newEns,
+    newEnsContract,
+    newBaseRegistrar,
+    newBaseRegistrarContract,
+    newControllerContract,
+    nameLogger
+  })
+
   const baseDays = 60
   const beforeTime = new Date(
     (await web3.eth.getBlock('latest')).timestamp * 1000
@@ -1153,7 +1173,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
-    // nameWrapperAddress: nameWrapper._address
+    nameWrapperAddress
   }
   let config = {
     columns: {
