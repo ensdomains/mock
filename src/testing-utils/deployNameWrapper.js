@@ -8,7 +8,7 @@ import {
 } from './utils'
 import packet from "dns-packet";
 
-async function deployNameWrapper({ 
+async function deployNameWrapper(
     web3, 
     accounts, 
     newEns, 
@@ -17,27 +17,27 @@ async function deployNameWrapper({
     newBaseRegistrarContract,
     newControllerContract,
     nameLogger
-}) {
+) {    
     try {
 
-    const { sha3 } = web3.utils
-    function namehash(name) {
-        let node =
-            '0x0000000000000000000000000000000000000000000000000000000000000000'
-        if (name !== '') {
-            let labels = name.split('.')
-            for (let i = labels.length - 1; i >= 0; i--) {
-                node = sha3(node + sha3(labels[i]).slice(2), {
-                    encoding: 'hex',
-                })
+        const { sha3 } = web3.utils
+        function namehash(name) {
+            let node =
+                '0x0000000000000000000000000000000000000000000000000000000000000000'
+            if (name !== '') {
+                let labels = name.split('.')
+                for (let i = labels.length - 1; i >= 0; i--) {
+                    node = sha3(node + sha3(labels[i]).slice(2), {
+                        encoding: 'hex',
+                    })
+                }
             }
+            return node.toString()
         }
-        return node.toString()
-    }
 
-    function encodeName(name) {
-        return '0x' + packet.name.encode(name).toString('hex')
-      }
+        function encodeName(name) {
+            return '0x' + packet.name.encode(name).toString('hex')
+        }
 
 
         const staticMetadataServiceJSON = loadContract('wrapper', 'StaticMetadataService')

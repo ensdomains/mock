@@ -1,5 +1,5 @@
 import deployDNSSEC from './deployDNSSEC'
-
+import deployNameWrapper from './deployNameWrapper'
 import {
   DAYS,
   advanceTime,
@@ -12,7 +12,6 @@ import {
 import { table } from 'table'
 import { NameLogger } from './namelogger'
 import { interfaces } from '../constants/interfaces'
-// import deployNameWrapper from './deployNameWrapper'
 const ROOT_NODE = '0x00000000000000000000000000000000'
 // ipfs://QmTeW79w7QQ6Npa3b1d5tANreCDxF2iDaAPsDvW6KtLmfB
 const contenthash =
@@ -649,19 +648,6 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     // Redeploy under new registry
     await deployDNSSEC(web3, accounts, newEns, newResolver)
   }
-
-  // const {nameWrapperAddress} = await deployNameWrapper({
-  //   web3,
-  //   accounts,
-  //   newEns,
-  //   newEnsContract,
-  //   newBaseRegistrar,
-  //   newBaseRegistrarContract,
-  //   newControllerContract,
-  //   nameLogger
-  // })
-
-
   await newEnsContract
     .setSubnodeOwner(ROOT_NODE, sha3('eth'), accounts[0])
     .send({ from: accounts[0] })
@@ -898,6 +884,18 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   nameLogger.record('example.test', { label: 'example', migrated: true })
 
+    // Needs to be run before all the timing based mock data
+    const {nameWrapperAddress} = await deployNameWrapper(
+      web3,
+      accounts,
+      newEns,
+      newEnsContract,
+      newBaseRegistrar,
+      newBaseRegistrarContract,
+      newControllerContract,
+      nameLogger
+    )
+    
   const baseDays = 60
   const beforeTime = new Date(
     (await web3.eth.getBlock('latest')).timestamp * 1000
@@ -1021,7 +1019,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
-    nameWrapperAddress: undefined
+    nameWrapperAddress: nameWrapperAddress
   }
   let config = {
     columns: {
