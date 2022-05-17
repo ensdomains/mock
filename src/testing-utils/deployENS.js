@@ -52,6 +52,8 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
   const registryJSON = loadContract('registry', 'ENSRegistry')
   const resolverJSON = loadContract('resolvers', 'PublicResolver')
   const ownedResolverJSON = loadContract('resolvers', 'OwnedResolver')
+  const offchainresolverpath = `${process.env.PWD}/node_modules/@ensdomains/offchain-resolver-contracts/artifacts/contracts/OffchainResolver.sol/OffchainResolver.json`
+  const offchainResolverJSON = require(offchainresolverpath)
   const oldResolverJSON = loadContract('ens-022', 'PublicResolver')
   const reverseRegistrarJSON = loadContract('registry', 'ReverseRegistrar')
   const priceOracleJSON = loadContract('ethregistrar-202', 'SimplePriceOracle')
@@ -101,6 +103,17 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     var ens = await deploy(web3, accounts[0], registryJSON)
     var resolver = await deploy(web3, accounts[0], resolverJSON, ens._address, ZERO_ADDRESS)
     var ownedResolver = await deploy(web3, accounts[0], ownedResolverJSON, ens._address, ZERO_ADDRESS)
+    var GATEWAY_HOST = 'http://localhost:8080'
+    // demo url
+    // var GATEWAY_HOST = 'https://offchain-resolver-example.uc.r.appspot.com'
+    var gatewayUrl = `${GATEWAY_HOST}/{sender}/{data}.json`
+    var offchainResolver = await deploy(
+      web3,
+      accounts[0],
+      offchainResolverJSON,
+      gatewayUrl,
+      [accounts[0]]
+    )
     var oldResolver = await deploy(
       web3,
       accounts[0],
@@ -315,6 +328,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     'abittooawesome3',
     'subdomaindummy',
     'contractdomain',
+    'offchainexample',
     'data',
     'ens',
   ]
@@ -998,6 +1012,10 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     // Disabled for now as configureDomain is throwing errorr
     // await subdomainRegistrarContract.migrateSubdomain(namehash.hash("ismoney.eth"), sha3("eth")).send({from: accounts[0]})
 
+  await newEnsContract
+    .setResolver(namehash('offchainexample.eth'), offchainResolver._address)
+    .send({ from: accounts[0] })
+
   let response = {
     emptyAddress: '0x0000000000000000000000000000000000000000',
     ownerAddress: accounts[0],
@@ -1019,6 +1037,7 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
+    offchainResolver: offchainResolver._address,
     nameWrapperAddress: nameWrapperAddress
   }
   let config = {

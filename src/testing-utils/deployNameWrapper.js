@@ -82,7 +82,7 @@ async function deployNameWrapper(
      * @name wrappedname.eth
      * @desc mock data for a properly wrapped domain 
      */
-    await registerName(web3, accounts[0], newControllerContract, 'wrappedname');
+    await registerName(web3, accounts[0], newControllerContract, 'wrappedname', 365 * DAYS * 5);
     console.log('addint to name logger');
     nameLogger.record('wrappedname.eth', {label: 'wrappedname'});
     console.log('asserting results');

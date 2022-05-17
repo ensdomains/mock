@@ -7,7 +7,7 @@ export const advanceTime = util.promisify(function (web3, delay, done) {
     {
       jsonrpc: '2.0',
       method: 'evm_increaseTime',
-      params: [delay],
+      params: [delay], id:0
     },
     done
   )
@@ -83,7 +83,6 @@ export async function auctionLegacyNameWithoutFinalise(
   let bidhash = await registrarContract
     .shaBid(labelhash, account, value, salt)
     .call()
-
   let labelState = await registrarContract.state(labelhash).call()
 
   await registrarContract
