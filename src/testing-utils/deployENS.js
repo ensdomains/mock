@@ -1,5 +1,5 @@
 import deployDNSSEC from './deployDNSSEC'
-
+import deployNameWrapper from './deployNameWrapper'
 import {
   DAYS,
   advanceTime,
@@ -898,6 +898,18 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     .send({ from: accounts[0] })
   nameLogger.record('example.test', { label: 'example', migrated: true })
 
+    // Needs to be run before all the timing based mock data
+    const {nameWrapperAddress} = await deployNameWrapper(
+      web3,
+      accounts,
+      newEns,
+      newEnsContract,
+      newBaseRegistrar,
+      newBaseRegistrarContract,
+      newControllerContract,
+      nameLogger
+    )
+    
   const baseDays = 60
   const beforeTime = new Date(
     (await web3.eth.getBlock('latest')).timestamp * 1000
@@ -1025,7 +1037,8 @@ async function deployENS({ web3, accounts, dnssec = false, exponential = false }
     baseRegistrarAddress: newBaseRegistrar._address,
     exponentialPremiumPriceOracle: exponentialPremiumPriceOracle._address,
     dummyOracle: dummyOracle._address,
-    offchainResolver: offchainResolver._address
+    offchainResolver: offchainResolver._address,
+    nameWrapperAddress: nameWrapperAddress
   }
   let config = {
     columns: {
